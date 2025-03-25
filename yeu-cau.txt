@@ -1,0 +1,160 @@
+### 📌 **Kế hoạch chi tiết xây dựng ứng dụng quản lý thu chi cá nhân (React + TypeScript, MongoDB, Swapper API)**
+
+---
+
+## **1. Kiến trúc tổng thể**
+- **Frontend**: React + TypeScript, Tailwind CSS, Material UI
+- **Backend**: Node.js + Express, MongoDB + Mongoose
+- **Authentication**: JWT (JSON Web Token) + OAuth2 (Google, Facebook)
+- **API Management**: Swapper
+- **Thống kê**: Recharts / Chart.js
+- **Xuất dữ liệu**: SheetJS (xlsx)
+- **Logging & Monitoring**: Winston + Morgan
+- **Bảo mật**: bcrypt, helmet, cors, rate-limiter
+
+---
+
+## **2. Chi tiết từng chức năng & giao diện**
+
+### 🎨 **1. Landing Page (Trang giới thiệu)**
+💡 **Mục tiêu**: Giao diện hiện đại, trực quan, giúp thu hút người dùng.
+
+#### ✅ **Chức năng**
+- **Header**: 
+  - Logo
+  - Menu: `Trang chủ | Tính năng | Giá | Liên hệ | Đăng nhập`
+  - CTA: `Đăng ký ngay`
+- **Hero Section**:
+  - Ảnh minh họa, slogan ấn tượng
+  - Nút "Bắt đầu ngay"
+- **Tính năng nổi bật**:
+  - Quản lý thu chi cá nhân
+  - Quản lý quỹ tiết kiệm, đầu tư
+  - Thống kê tài chính chi tiết
+  - Hỗ trợ xuất báo cáo
+- **Testimonial**: Đánh giá từ người dùng thực tế
+- **Bảng giá (nếu có)**: So sánh gói miễn phí và trả phí
+- **Footer**:
+  - Liên hệ
+  - Chính sách bảo mật
+  - Social links (Facebook, LinkedIn...)
+
+---
+
+### 🔐 **2. Đăng nhập / Đăng ký (Authentication)**
+💡 **Mục tiêu**: Đảm bảo bảo mật, trải nghiệm người dùng mượt mà.
+
+#### ✅ **Chức năng**
+- **Đăng ký tài khoản**:
+  - Nhập email, mật khẩu, xác thực email OTP
+  - Lưu thông tin người dùng vào MongoDB
+- **Đăng nhập**:
+  - Sử dụng email/mật khẩu hoặc OAuth2 (Google, Facebook)
+  - Hỗ trợ "Ghi nhớ đăng nhập"
+- **Quên mật khẩu**:
+  - Nhập email → Gửi link reset qua email
+  - Xác nhận OTP / Token để đặt lại mật khẩu
+- **Bảo mật**:
+  - Giới hạn số lần đăng nhập sai (Rate limiting)
+  - Refresh Token để duy trì đăng nhập lâu dài
+  - Mã hóa mật khẩu với bcrypt
+
+---
+
+### 🏠 **3. Dashboard Người Dùng**
+💡 **Mục tiêu**: Giao diện trực quan, giúp người dùng quản lý tài chính dễ dàng.
+
+#### ✅ **Giao diện**
+- **Thanh điều hướng (Sidebar)**
+  - `🏠 Trang chủ`
+  - `💰 Giao dịch`
+  - `📊 Thống kê`
+  - `🔒 Tài khoản`
+- **Trang chủ (Overview)**
+  - Hiển thị tổng quan:
+    - **Số dư hiện tại**
+    - **Tổng thu nhập**
+    - **Tổng chi tiêu**
+    - **Biểu đồ thu – chi theo tháng**
+  - Button **Thêm giao dịch mới**
+
+#### ✅ **Chức năng chính**
+##### 📌 **3.1. Quản lý giao dịch tài chính**
+- **Thêm mới giao dịch**:
+  - Nhập số tiền, chọn danh mục, chọn tài khoản
+  - Thêm ghi chú (tùy chọn)
+- **Xem lịch sử giao dịch**:
+  - Lọc theo ngày, tháng, danh mục, tài khoản
+  - Sắp xếp giao dịch
+- **Tính toán tự động**:
+  - Tổng thu nhập – Tổng chi tiêu = **Số dư hiện tại**
+  - Hiển thị xu hướng chi tiêu theo thời gian
+
+##### 📌 **3.2. Quản lý quỹ tiết kiệm**
+- **Tạo quỹ tiết kiệm mới**:
+  - Đặt mục tiêu số tiền
+  - Cập nhật tiến độ tiết kiệm
+- **Hiển thị danh sách quỹ tiết kiệm**
+- **Biểu đồ tiến độ tiết kiệm**
+
+##### 📌 **3.3. Quản lý đầu tư**
+- **Danh mục đầu tư**:
+  - Cổ phiếu, crypto, bất động sản...
+- **Tính toán lợi nhuận/thua lỗ**
+- **Biểu đồ tổng hợp đầu tư**
+
+##### 📌 **3.4. Thống kê tài chính**
+- **Biểu đồ tổng quan thu – chi**
+- **Tỷ lệ chi tiêu theo danh mục**
+- **Xu hướng thu nhập, chi tiêu**
+
+---
+
+### 🔧 **4. Trang Admin**
+💡 **Mục tiêu**: Hỗ trợ quản trị viên kiểm soát hệ thống.
+
+#### ✅ **Giao diện**
+- **Dashboard Admin**
+  - Hiển thị tổng số user, tổng số giao dịch
+  - Biểu đồ thống kê tài chính toàn hệ thống
+
+#### ✅ **Chức năng chính**
+##### 📌 **4.1. Quản lý người dùng**
+- Danh sách user, trạng thái tài khoản (hoạt động/khóa)
+- Tìm kiếm, lọc, sắp xếp user
+- Xóa tài khoản người dùng
+
+##### 📌 **4.2. Quản lý giao dịch**
+- Xem danh sách giao dịch của tất cả người dùng
+- Xóa giao dịch vi phạm (nếu có)
+
+##### 📌 **4.3. Quản lý danh mục thu – chi**
+- Thêm / sửa / xóa danh mục chi tiêu
+
+##### 📌 **4.4. Thống kê hệ thống**
+- Tổng số tiền giao dịch trong hệ thống
+- Số lượng user đăng ký theo tháng
+- Tổng số giao dịch mỗi tháng
+
+---
+
+## **3. Công nghệ & Thư viện**
+### **Frontend (React + TypeScript)**
+- UI: **Tailwind CSS, Material UI**
+- State Management: **Redux Toolkit / React Query**
+- API Call: **Axios + Swapper**
+- Authentication: **Firebase Auth / OAuth2**
+- Biểu đồ: **Recharts / Chart.js**
+- Animation: **Framer Motion**
+- Xuất Excel: **SheetJS (xlsx)**
+
+### **Backend (Node.js + Express)**
+- Database: **MongoDB + Mongoose**
+- Authentication: **JWT, Refresh Token**
+- Bảo mật: **bcrypt, helmet, cors, rate-limiter**
+- File Upload: **Multer**
+- Logging: **Winston + Morgan**
+- API Gateway: **Swapper**
+
+---
+

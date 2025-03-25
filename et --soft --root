@@ -1,0 +1,23 @@
+[33mcommit 00a3df9a6854c8a101f97b698df1b804b209a3e8[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmain[m[33m, [m[1;31morigin/main[m[33m)[m
+Merge: fd7a82d 49b00e2
+Author: phamtheson2807 <phamtheson2807@gmail.com>
+Date:   Tue Mar 25 10:45:57 2025 +0700
+
+    Merge branch 'main' of https://github.com/phamtheson2807/FinanceFlow
+    # Please enter a commit message to explain why this merge is necessary,
+    # especially if it merges an updated upstream into a topic branch.
+    #
+    # Lines starting with '#' will be ignored, and an empty message aborts
+    # the commit.
+
+[33mcommit 49b00e28c94d52a41aea4dfccaa4ce4045c94049[m
+Author: Phạm Thế Sơn <156593766+phamtheson2807@users.noreply.github.com>
+Date:   Tue Mar 25 10:19:28 2025 +0700
+
+    Create FinanceFlow.txt
+
+[33mcommit fd7a82d3888e3136720e997425dad689aa554b8e[m
+Author: chaoaphuc <phuc30122k3@gmail.com>
+Date:   Tue Mar 25 10:15:14 2025 +0700
+
+    Khởi tạo dự án

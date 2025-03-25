@@ -1,0 +1,29 @@
+{
+  "compilerOptions": {
+    "baseUrl": "src",
+    "target": "es5",
+    "lib": ["dom", "dom.iterable", "esnext"],
+    "allowJs": true,
+    "skipLibCheck": true,
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
+    "strict": true,
+    "forceConsistentCasingInFileNames": true,
+    "noFallthroughCasesInSwitch": true,
+    "module": "esnext",
+    "moduleResolution": "node",
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "noEmit": true,
+    "jsx": "react-jsx",
+    "types": ["node", "recharts", "axios", "framer-motion", "mongoose"], // Thêm các type cần thiết
+    "paths": {
+      "models/*": ["../models/*"],
+      "components/*": ["components/*"],
+      "components/users/*": ["components/users/*"],
+      "pages/*": ["pages/*"],
+      "pages/admin/*": ["pages/admin/*"]
+    }
+  },
+  "include": ["src"]
+}
