@@ -1,0 +1,9 @@
+{
+  "short_name": "Quản lý Tài chính",
+  "name": "Ứng dụng Quản lý Tài chính Cá nhân",
+  "icons": [],
+  "start_url": ".",
+  "display": "standalone",
+  "theme_color": "#000000",
+  "background_color": "#ffffff"
+} 
