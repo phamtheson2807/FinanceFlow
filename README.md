@@ -1,3 +1,6 @@
+# 💸 Welcome to FinanceFlow
+
+```go
 package main
 
 import (
@@ -40,14 +43,17 @@ func (p *Project) Init() {
 func PrintProjectInfo(p *Project) {
 	fmt.Printf("🚀 Dự án: %s\n", p.Name)
 	fmt.Println("📝 Mô tả:", p.Description)
+
 	fmt.Println("\n🎯 Mục tiêu:")
 	for _, goal := range p.Goals {
 		fmt.Println("- ", goal)
 	}
+
 	fmt.Println("\n🔧 Tính năng:")
 	for _, f := range p.Features {
 		fmt.Println("- ", f)
 	}
+
 	fmt.Println("\n🛠️ Công nghệ sử dụng:")
 	for k, v := range p.Technologies {
 		fmt.Printf("- %s: %s\n", k, v)
@@ -59,3 +65,4 @@ func main() {
 	app.Init()
 	PrintProjectInfo(app)
 }
+```
