@@ -1,3 +1,6 @@
+# 👋 Welcome to My GitHub Profile
+
+```go
 package main
 
 import (
@@ -35,3 +38,4 @@ func main() {
 	fmt.Println("🚀 Welcome to FinanceFlow")
 	fmt.Printf("👨‍💻 Built with love by @%s\n", dev.Username)
 }
+```
