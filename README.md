@@ -6,12 +6,12 @@ import (
 
 // Github định nghĩa thông tin về tác giả của dự án FinanceFlow
 type Github struct {
-	Username       string
-	Contacts       map[string]string
-	Aliases        []string
-	Location       string
-	Age            string
-	Occupation     string
+	Username        string
+	Contacts        map[string]string
+	Aliases         []string
+	Location        string
+	Age             string
+	Occupation      string
 	OperatingSystem string
 }
 
@@ -32,35 +32,34 @@ func (g *Github) Init() {
 // WelcomeMessage hiển thị thông điệp chào mừng cho FinanceFlow
 func WelcomeMessage(g *Github) string {
 	return fmt.Sprintf(`
-Chào Mừng Đến Với FinanceFlow
+🎉 Chào Mừng Đến Với FinanceFlow 🎉
 
 FinanceFlow là một dự án quản lý tài chính cá nhân được phát triển bởi %s.
-Thông tin về tác giả:
-- Tên tài khoản GitHub: %s
-- Liên hệ:
+
+🔍 Thông tin tác giả:
+- 💻 Tài khoản GitHub: %s
+- 📬 Liên hệ:
   - Discord: %s
   - Facebook: %s
-- Biệt danh: %v
-- Vị trí: %s
-- Tuổi: %s
-- Nghề nghiệp: %s
-- Hệ điều hành sử dụng: %s
+- 🧑‍🚀 Biệt danh: %v
+- 📍 Vị trí: %s
+- 🎂 Tuổi: %s
+- 💼 Nghề nghiệp: %s
+- 🖥️ Hệ điều hành sử dụng: %s
 
-Mục tiêu của FinanceFlow:
-- Theo dõi thu nhập và chi tiêu.
-- Giao diện thân thiện, dễ sử dụng.
+🎯 Mục tiêu của FinanceFlow:
+- Theo dõi thu nhập và chi tiêu một cách dễ dàng.
+- Cung cấp giao diện người dùng thân thiện.
 - Trực quan hóa dữ liệu tài chính qua biểu đồ và bảng biểu.
 
 Hãy cùng xây dựng một công cụ tài chính tuyệt vời!
-Xem thêm tại: https://github.com/phamtheson2807/FinanceFlow
+🔗 GitHub: https://github.com/phamtheson2807/FinanceFlow
 `, g.Username, g.Username, g.Contacts["Discord"], g.Contacts["Facebook"], g.Aliases, g.Location, g.Age, g.Occupation, g.OperatingSystem)
 }
 
 func main() {
-	// Khởi tạo thông tin tác giả
 	author := &Github{}
 	author.Init()
 
-	// In thông điệp chào mừng
 	fmt.Println(WelcomeMessage(author))
 }
