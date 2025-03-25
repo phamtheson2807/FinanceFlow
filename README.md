@@ -4,6 +4,7 @@ import (
     "fmt"
 )
 
+// Github định nghĩa thông tin tác giả của dự án FinanceFlow
 type Github struct {
     Username         string
     Contacts         map[string]string
@@ -31,6 +32,6 @@ func main() {
     dev := &Github{}
     dev.Init()
 
-    fmt.Println("Welcome to FinanceFlow 🚀")
-    fmt.Printf("Built with love by @%s 💻\n", dev.Username)
+    fmt.Println("🚀 Welcome to FinanceFlow")
+    fmt.Printf("👨‍💻 Built with love by @%s\n", dev.Username)
 }
