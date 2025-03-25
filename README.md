@@ -1,41 +1,61 @@
-# 👋 Welcome to My GitHub Profile
-
-```go
 package main
 
 import (
 	"fmt"
 )
 
-// Github định nghĩa thông tin tác giả của dự án FinanceFlow
-type Github struct {
-	Username        string
-	Contacts        map[string]string
-	Aliases         []string
-	Location        string
-	Age             string
-	Occupation      string
-	OperatingSystem string
+// Project mô phỏng thông tin về dự án FinanceFlow
+type Project struct {
+	Name         string
+	Description  string
+	Goals        []string
+	Features     []string
+	Technologies map[string]string
 }
 
-func (g *Github) Init() {
-	g.Username = "phamtheson2807"
-	g.Contacts = map[string]string{
-		"Discord":  "#",
-		"Facebook": "PhamTheSon.User",
+func (p *Project) Init() {
+	p.Name = "FinanceFlow"
+	p.Description = "Ứng dụng giúp quản lý tài chính cá nhân hiệu quả và trực quan."
+	p.Goals = []string{
+		"Theo dõi thu nhập và chi tiêu",
+		"Tạo thói quen tài chính lành mạnh",
+		"Trực quan hóa dữ liệu tài chính",
 	}
-	g.Aliases = []string{"thesondev", "Tdv"}
-	g.Location = "localhost, Việt Nam"
-	g.Age = "21+"
-	g.Occupation = "Freelance Developer"
-	g.OperatingSystem = "Windows, Arch Linux, VPS"
+	p.Features = []string{
+		"Thống kê thu chi theo thời gian",
+		"Phân loại giao dịch",
+		"Biểu đồ trực quan",
+		"Xuất báo cáo Excel",
+		"Xác thực bảo mật bằng JWT",
+	}
+	p.Technologies = map[string]string{
+		"Frontend":      "React.js, TypeScript, Tailwind CSS",
+		"Backend":       "Node.js, Express.js",
+		"Database":      "MongoDB",
+		"Authentication": "JWT, Refresh Token",
+		"Export":        "SheetJS (xlsx)",
+	}
+}
+
+func PrintProjectInfo(p *Project) {
+	fmt.Printf("🚀 Dự án: %s\n", p.Name)
+	fmt.Println("📝 Mô tả:", p.Description)
+	fmt.Println("\n🎯 Mục tiêu:")
+	for _, goal := range p.Goals {
+		fmt.Println("- ", goal)
+	}
+	fmt.Println("\n🔧 Tính năng:")
+	for _, f := range p.Features {
+		fmt.Println("- ", f)
+	}
+	fmt.Println("\n🛠️ Công nghệ sử dụng:")
+	for k, v := range p.Technologies {
+		fmt.Printf("- %s: %s\n", k, v)
+	}
 }
 
 func main() {
-	dev := &Github{}
-	dev.Init()
-
-	fmt.Println("🚀 Welcome to FinanceFlow")
-	fmt.Printf("👨‍💻 Built with love by @%s\n", dev.Username)
+	app := &Project{}
+	app.Init()
+	PrintProjectInfo(app)
 }
-```
