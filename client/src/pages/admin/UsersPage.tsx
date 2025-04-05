@@ -1,4 +1,5 @@
-import { Box, Button, CircularProgress, Dialog, DialogActions, DialogContent, DialogTitle, Grid, MenuItem, Select, TextField, Typography, useTheme } from '@mui/material';
+import { AdminPanelSettings, Lock, LockOpen, Mail } from '@mui/icons-material'; // Thêm biểu tượng
+import { Avatar, Box, Button, Card, CardContent, CircularProgress, Dialog, DialogActions, DialogContent, DialogTitle, Divider, Grid, MenuItem, Select, TextField, Typography, useTheme } from '@mui/material';
 import Grow from '@mui/material/Grow';
 import axios from 'axios';
 import { motion } from 'framer-motion';
@@ -199,7 +200,7 @@ const UsersPage = () => {
   };
 
   const handleOpenEdit = (user: User) => {
-    console.log('handleOpenEdit called with:', user); // Debug
+    console.log('handleOpenEdit called with:', user);
     setEditUser(user);
   };
 
@@ -292,57 +293,165 @@ const UsersPage = () => {
               onLock={handleLockUser}
               onUnlock={handleUnlockUser}
               onViewDetails={handleViewDetails}
-              onEdit={handleOpenEdit} // Truyền hàm handleOpenEdit để mở dialog
+              onEdit={handleOpenEdit}
               onDelete={(userId) => setDeleteUserId(userId)}
             />
           </motion.div>
 
-          {/* Dialog xem chi tiết */}
+          {/* Dialog xem chi tiết - Đã cải thiện */}
           <Dialog
             open={!!viewUser}
             onClose={() => setViewUser(null)}
             TransitionComponent={Grow}
             transitionDuration={400}
+            maxWidth="sm"
+            fullWidth
           >
             <DialogTitle
               sx={{
                 fontFamily: 'Poppins, sans-serif',
                 fontWeight: 'bold',
-                bgcolor: 'rgba(245, 245, 245, 0.95)',
-                color: '#1E3A8A',
+                bgcolor: '#1E3A8A',
+                color: 'white',
                 py: 2,
-                boxShadow: '0 2px 10px rgba(0,0,0,0.05)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                boxShadow: '0 4px 15px rgba(0,0,0,0.1)',
               }}
             >
-              Thông Tin Người Dùng
+              <Typography variant="h6" sx={{ fontFamily: 'Poppins, sans-serif', fontWeight: 'bold' }}>
+                Thông Tin Người Dùng
+              </Typography>
             </DialogTitle>
-            <DialogContent sx={{ bgcolor: 'rgba(245, 245, 245, 0.95)', py: 3, px: 4 }}>
-              <Grid container spacing={2}>
-                <Grid item xs={12}>
-                  <Typography sx={{ fontFamily: 'Poppins, sans-serif', color: '#333', fontWeight: 'medium' }}>Tên:</Typography>
-                  <Typography sx={{ fontFamily: 'Poppins, sans-serif', color: '#777' }}>{viewUser?.name || 'Không có thông tin'}</Typography>
-                </Grid>
-                <Grid item xs={12}>
-                  <Typography sx={{ fontFamily: 'Poppins, sans-serif', color: '#333', fontWeight: 'medium' }}>Email:</Typography>
-                  <Typography sx={{ fontFamily: 'Poppins, sans-serif', color: '#777' }}>{viewUser?.email || 'Không có thông tin'}</Typography>
-                </Grid>
-                <Grid item xs={12}>
-                  <Typography sx={{ fontFamily: 'Poppins, sans-serif', color: '#333', fontWeight: 'medium' }}>Vai trò:</Typography>
-                  <Typography sx={{ fontFamily: 'Poppins, sans-serif', color: '#777' }}>{viewUser?.role === 'admin' ? 'Quản trị viên' : 'Người dùng'}</Typography>
-                </Grid>
-                <Grid item xs={12}>
-                  <Typography sx={{ fontFamily: 'Poppins, sans-serif', color: '#333', fontWeight: 'medium' }}>Trạng thái:</Typography>
-                  <Typography sx={{ fontFamily: 'Poppins, sans-serif', color: '#777' }}>{viewUser?.isLocked ? 'Đã khóa' : 'Hoạt động'}</Typography>
-                </Grid>
-              </Grid>
+            <DialogContent sx={{ bgcolor: '#ffffff', py: 4, px: 3 }}>
+              <Card sx={{ boxShadow: '0 4px 20px rgba(0,0,0,0.05)', borderRadius: 3, overflow: 'hidden' }}>
+                <CardContent sx={{ p: 3 }}>
+                  {/* Avatar và tên */}
+                  <Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
+                    <Avatar
+                      sx={{
+                        bgcolor: theme.palette.primary.main,
+                        width: 60,
+                        height: 60,
+                        mr: 2,
+                        fontSize: '1.5rem',
+                        boxShadow: '0 2px 10px rgba(0,0,0,0.1)',
+                      }}
+                    >
+                      {viewUser?.name?.charAt(0) || 'U'}
+                    </Avatar>
+                    <Typography
+                      variant="h5"
+                      sx={{
+                        fontFamily: 'Poppins, sans-serif',
+                        fontWeight: 'bold',
+                        color: '#1E3A8A',
+                      }}
+                    >
+                      {viewUser?.name || 'Không có thông tin'}
+                    </Typography>
+                  </Box>
+
+                  <Divider sx={{ mb: 2, borderColor: '#e0e0e0' }} />
+
+                  {/* Thông tin chi tiết */}
+                  <Grid container spacing={2}>
+                    <Grid item xs={12} sx={{ display: 'flex', alignItems: 'center' }}>
+                      <Mail sx={{ color: theme.palette.primary.main, mr: 1 }} />
+                      <Box>
+                        <Typography
+                          sx={{
+                            fontFamily: 'Poppins, sans-serif',
+                            color: '#555',
+                            fontWeight: 'medium',
+                          }}
+                        >
+                          Email
+                        </Typography>
+                        <Typography
+                          sx={{
+                            fontFamily: 'Poppins, sans-serif',
+                            color: '#333',
+                            fontSize: '1rem',
+                          }}
+                        >
+                          {viewUser?.email || 'Không có thông tin'}
+                        </Typography>
+                      </Box>
+                    </Grid>
+
+                    <Grid item xs={12} sx={{ display: 'flex', alignItems: 'center' }}>
+                      <AdminPanelSettings sx={{ color: theme.palette.primary.main, mr: 1 }} />
+                      <Box>
+                        <Typography
+                          sx={{
+                            fontFamily: 'Poppins, sans-serif',
+                            color: '#555',
+                            fontWeight: 'medium',
+                          }}
+                        >
+                          Vai trò
+                        </Typography>
+                        <Typography
+                          sx={{
+                            fontFamily: 'Poppins, sans-serif',
+                            color: viewUser?.role === 'admin' ? '#1976D2' : '#333',
+                            fontSize: '1rem',
+                          }}
+                        >
+                          {viewUser?.role === 'admin' ? 'Quản trị viên' : 'Người dùng'}
+                        </Typography>
+                      </Box>
+                    </Grid>
+
+                    <Grid item xs={12} sx={{ display: 'flex', alignItems: 'center' }}>
+                      {viewUser?.isLocked ? (
+                        <Lock sx={{ color: '#f44336', mr: 1 }} />
+                      ) : (
+                        <LockOpen sx={{ color: '#4caf50', mr: 1 }} />
+                      )}
+                      <Box>
+                        <Typography
+                          sx={{
+                            fontFamily: 'Poppins, sans-serif',
+                            color: '#555',
+                            fontWeight: 'medium',
+                          }}
+                        >
+                          Trạng thái
+                        </Typography>
+                        <Typography
+                          sx={{
+                            fontFamily: 'Poppins, sans-serif',
+                            color: viewUser?.isLocked ? '#f44336' : '#4caf50',
+                            fontSize: '1rem',
+                          }}
+                        >
+                          {viewUser?.isLocked ? 'Đã khóa' : 'Hoạt động'}
+                        </Typography>
+                      </Box>
+                    </Grid>
+                  </Grid>
+                </CardContent>
+              </Card>
             </DialogContent>
-            <DialogActions sx={{ bgcolor: 'rgba(245, 245, 245, 0.95)', px: 4, py: 2 }}>
+            <DialogActions sx={{ bgcolor: '#f5f5f5', px: 3, py: 2 }}>
               <Button
                 onClick={() => setViewUser(null)}
+                variant="outlined"
                 sx={{
                   fontFamily: 'Poppins, sans-serif',
-                  color: '#777',
-                  '&:hover': { color: '#1E3A8A' },
+                  color: '#1E3A8A',
+                  borderColor: '#1E3A8A',
+                  borderRadius: 2,
+                  px: 3,
+                  py: 1,
+                  '&:hover': {
+                    bgcolor: '#1E3A8A',
+                    color: 'white',
+                    borderColor: '#1E3A8A',
+                  },
                 }}
               >
                 Đóng

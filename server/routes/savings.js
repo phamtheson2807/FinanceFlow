@@ -108,7 +108,7 @@ router.put('/:id', authMiddleware, async (req, res) => {
 // Xóa quỹ tiết kiệm
 router.delete('/:id', authMiddleware, async (req, res) => {
   try {
-    const userId = req.user._id;
+    const userId = req.user._id.toString(); // Chuyển ObjectId thành chuỗi
     const savingId = req.params.id;
     console.log('📡 Nhận yêu cầu DELETE /api/savings/:id từ user:', userId, 'ID quỹ:', savingId);
 
@@ -126,13 +126,9 @@ router.delete('/:id', authMiddleware, async (req, res) => {
 
     await saving.deleteOne();
     console.log('✅ Đã xóa quỹ:', savingId);
-
     res.status(200).json({ message: 'Quỹ tiết kiệm đã được xóa' });
   } catch (error) {
-    console.error('❌ Lỗi xóa quỹ tiết kiệm:', {
-      message: error.message,
-      stack: error.stack,
-    });
+    console.error('❌ Lỗi xóa quỹ tiết kiệm:', { message: error.message, stack: error.stack });
     res.status(500).json({ message: 'Lỗi máy chủ khi xóa quỹ tiết kiệm' });
   }
 });

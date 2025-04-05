@@ -1,4 +1,3 @@
-// routes/auth.js
 const express = require('express');
 const router = express.Router();
 const bcrypt = require('bcryptjs');
@@ -9,42 +8,105 @@ const { authMiddleware } = require('../middleware/auth');
 require('../config/passport');
 const sendVerificationEmail = require('../utils/sendVerificationEmail');
 const sendResetPasswordEmail = require('../utils/sendResetPasswordEmail');
-const Notification = require('../models/Notification');
+const multer = require('multer');
+const path = require('path');
+const EditHistory = require('../models/EditHistory');
+const fs = require('fs');
 
+
+
+// Tạo thư mục nếu chưa có
+const uploadDir = path.join(__dirname, '../uploads');
+if (!fs.existsSync(uploadDir)) {
+  fs.mkdirSync(uploadDir);
+}
+
+// Cấu hình multer
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, uploadDir);
+  },
+  filename: (req, file, cb) => {
+    const ext = path.extname(file.originalname);
+    const uniqueName = `avatar-${Date.now()}-${Math.round(Math.random() * 1e9)}${ext}`;
+    cb(null, uniqueName);
+  },
+});
+const upload = multer({ storage });
+
+// Route đăng ký
 router.post('/register', async (req, res) => {
   try {
+    // Lấy dữ liệu từ body
     const { name, email, password } = req.body;
-    let user = await User.findOne({ email });
 
+    // Kiểm tra dữ liệu đầu vào
+    if (!name || !email || !password) {
+      return res.status(400).json({ message: 'Vui lòng cung cấp đầy đủ tên, email và mật khẩu' });
+    }
+
+    // Kiểm tra định dạng email
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      return res.status(400).json({ message: 'Email không hợp lệ' });
+    }
+
+    // Kiểm tra độ dài mật khẩu
+    if (password.length < 6) {
+      return res.status(400).json({ message: 'Mật khẩu phải có ít nhất 6 ký tự' });
+    }
+
+    // Kiểm tra xem email đã tồn tại chưa
+    let user = await User.findOne({ email: email.trim().toLowerCase() });
     if (user) {
       return res.status(400).json({ message: 'Email đã được sử dụng' });
     }
 
+    // Mã hóa mật khẩu
     const salt = await bcrypt.genSalt(10);
     const hashedPassword = await bcrypt.hash(password, salt);
 
+    // Tạo user mới
     user = new User({
-      name,
-      email,
+      name: name.trim(),
+      email: email.trim().toLowerCase(),
       password: hashedPassword,
       isVerified: false,
       role: 'user',
       isLocked: false,
+      plan: 'free',
     });
 
+    // Lưu user vào database
     await user.save();
+    console.log(`✅ Đã tạo user mới: ${user.email}`);
 
-    const verificationToken = jwt.sign({ email }, process.env.JWT_SECRET, { expiresIn: '1d' });
-    await sendVerificationEmail(email, verificationToken);
-    console.log(`📩 Đã gửi email xác thực đến: ${email}`);
+    // Tạo token xác thực email
+    const verificationToken = jwt.sign({ email: user.email }, process.env.JWT_SECRET, { expiresIn: '1d' });
 
-    res.status(201).json({ message: 'Tài khoản đã tạo, vui lòng kiểm tra email để xác thực!' });
+    // Gửi email xác thực
+    try {
+      await sendVerificationEmail(user.email, verificationToken);
+      console.log(`📩 Đã gửi email xác thực đến: ${user.email}`);
+    } catch (emailError) {
+      console.error('❌ Lỗi khi gửi email xác thực:', emailError);
+      // Không trả về lỗi cho client, chỉ ghi log, vì user đã được tạo thành công
+    }
+
+    // Trả về response thành công
+    res.status(201).json({ message: 'Tài khoản đã được tạo, vui lòng kiểm tra email để xác thực!' });
   } catch (error) {
     console.error('❌ Lỗi đăng ký:', error);
-    res.status(500).json({ message: 'Lỗi server' });
+    if (error.name === 'ValidationError') {
+      // Xử lý lỗi validation từ Mongoose
+      const messages = Object.values(error.errors).map((err) => err.message);
+      return res.status(400).json({ message: messages.join(', ') });
+    }
+    res.status(500).json({ message: 'Lỗi máy chủ khi đăng ký' });
   }
 });
 
+// Route xác thực email
 router.get('/verify-email', async (req, res) => {
   try {
     const { token } = req.query;
@@ -74,6 +136,7 @@ router.get('/verify-email', async (req, res) => {
   }
 });
 
+// Route đăng nhập
 router.post('/login', async (req, res) => {
   try {
     const { email, password } = req.body;
@@ -106,7 +169,7 @@ router.post('/login', async (req, res) => {
     }
 
     const token = jwt.sign(
-      { id: user._id, email: user.email, role: user.role || 'user' },
+      { id: user._id, email: user.email, role: user.role || 'user', plan: user.plan || 'free' }, // Thêm plan vào token
       process.env.JWT_SECRET,
       { expiresIn: '7d' }
     );
@@ -118,6 +181,7 @@ router.post('/login', async (req, res) => {
         name: user.name,
         email: user.email,
         role: user.role || 'user',
+        plan: user.plan || 'free', // Thêm plan vào response
         isLocked: user.isLocked,
         isVerified: user.isVerified,
         avatar: user.avatar || '',
@@ -129,6 +193,7 @@ router.post('/login', async (req, res) => {
   }
 });
 
+// Route xác thực admin
 router.post('/verify-admin', async (req, res) => {
   try {
     const { email } = req.body;
@@ -148,6 +213,7 @@ router.post('/verify-admin', async (req, res) => {
   }
 });
 
+// Route quên mật khẩu
 router.post('/forgot-password', async (req, res) => {
   try {
     const { email } = req.body;
@@ -169,6 +235,7 @@ router.post('/forgot-password', async (req, res) => {
   }
 });
 
+// Route đặt lại mật khẩu
 router.post('/reset-password', async (req, res) => {
   try {
     const { token, newPassword } = req.body;
@@ -193,6 +260,7 @@ router.post('/reset-password', async (req, res) => {
   }
 });
 
+// Route lấy thông tin người dùng
 router.get('/me', authMiddleware, async (req, res) => {
   try {
     if (!req.user || !req.user._id) {
@@ -214,6 +282,7 @@ router.get('/me', authMiddleware, async (req, res) => {
         name: user.name,
         email: user.email,
         role: user.role || 'user',
+        plan: user.plan || 'free',
         isLocked: user.isLocked,
         isVerified: user.isVerified,
         avatar: user.avatar || '',
@@ -226,14 +295,16 @@ router.get('/me', authMiddleware, async (req, res) => {
   }
 });
 
+
+// Route cập nhật thông tin người dùng
 router.put('/update', authMiddleware, async (req, res) => {
   try {
     const { name, email, avatar } = req.body;
-    if (!req.user || !req.user._id) {
+    if (!req.user || !req.user.id) {
       return res.status(401).json({ message: 'Token không hợp lệ hoặc hết hạn' });
     }
 
-    const user = await User.findById(req.user._id);
+    const user = await User.findById(req.user.id);
     if (!user) {
       return res.status(404).json({ message: 'Không tìm thấy người dùng' });
     }
@@ -263,6 +334,7 @@ router.put('/update', authMiddleware, async (req, res) => {
         name: user.name,
         email: user.email,
         role: user.role || 'user',
+        plan: user.plan || 'free', // Thêm plan
         isLocked: user.isLocked,
         isVerified: user.isVerified,
         avatar: user.avatar || '',
@@ -274,19 +346,17 @@ router.put('/update', authMiddleware, async (req, res) => {
   }
 });
 
+
+// Đổi mật khẩu
 router.put('/change-password', authMiddleware, async (req, res) => {
   try {
-    console.log('📡 Request body:', req.body);
     const { currentPassword, newPassword } = req.body;
-    if (!req.user || !req.user._id) {
-      return res.status(401).json({ message: 'Token không hợp lệ hoặc hết hạn' });
-    }
 
     if (!currentPassword || !newPassword) {
       return res.status(400).json({ message: 'Vui lòng cung cấp mật khẩu hiện tại và mật khẩu mới' });
     }
 
-    const user = await User.findById(req.user._id);
+    const user = await User.findById(req.user._id); // dùng req.user._id thay vì req.user.id nếu middleware set như vậy
     if (!user) {
       return res.status(404).json({ message: 'Không tìm thấy người dùng' });
     }
@@ -296,59 +366,93 @@ router.put('/change-password', authMiddleware, async (req, res) => {
       return res.status(400).json({ message: 'Mật khẩu hiện tại không đúng' });
     }
 
-    if (newPassword.length < 6) {
-      return res.status(400).json({ message: 'Mật khẩu mới phải có ít nhất 6 ký tự' });
-    }
-
     const salt = await bcrypt.genSalt(10);
     user.password = await bcrypt.hash(newPassword, salt);
     await user.save();
-    console.log(`✅ Mật khẩu của người dùng ${user.email} đã được thay đổi thành công!`);
 
-    res.json({ message: 'Mật khẩu đã được thay đổi thành công!' });
-  } catch (error) {
-    console.error('❌ Lỗi khi thay đổi mật khẩu:', error);
-    res.status(500).json({ message: 'Lỗi máy chủ' });
+    res.json({ message: '✅ Đổi mật khẩu thành công' });
+  } catch (err) {
+    console.error('❌ Lỗi khi đổi mật khẩu:', err);
+    res.status(500).json({ message: 'Lỗi máy chủ khi đổi mật khẩu' });
   }
 });
 
-// Comment out Google OAuth routes for now
-/*
-router.get('/google', passport.authenticate('google', {
-  scope: ['profile', 'email']
-}));
 
-router.get('/google/callback', passport.authenticate('google', {
-  failureRedirect: `${process.env.CLIENT_URL}/login?error=OAuthFail`,
-  session: false
-}), async (req, res) => {
-  try {
-    const user = req.user;
-    if (!user) {
-      console.error('❌ Không tìm thấy user từ Google OAuth');
-      return res.redirect(`${process.env.CLIENT_URL}/login?error=OAuthFail`);
+// Route bắt đầu xác thực Google
+router.get('/google', passport.authenticate('google', { scope: ['profile', 'email'] }));
+
+// Route callback từ Google
+router.get(
+  '/google/callback',
+  passport.authenticate('google', {
+    failureRedirect: `${process.env.CLIENT_URL}/login?error=OAuthFail`,
+    session: false,
+  }),
+  async (req, res) => {
+    try {
+      if (!req.user) {
+        console.error('❌ Không tìm thấy user từ Google OAuth');
+        return res.redirect(`${process.env.CLIENT_URL}/login?error=OAuthFail`);
+      }
+
+      const { id, email, displayName, photos } = req.user;
+
+      let user = await User.findOne({ email });
+      if (!user) {
+        const salt = await bcrypt.genSalt(10);
+        const hashedPassword = await bcrypt.hash('google-' + Date.now(), salt);
+        
+        user = new User({
+          name: displayName,
+          email,
+          googleId: id,
+          isVerified: true,
+          password: hashedPassword,
+          role: 'user',
+          isLocked: false,
+          plan: 'free',
+          avatar: photos?.[0]?.value || '',
+        });
+        await user.save();
+        console.log('✅ Tạo user Google mới thành công:', email);
+      }
+
+      // Tạo token với đầy đủ thông tin
+      const token = jwt.sign(
+        { 
+          id: user._id,
+          email: user.email,
+          name: user.name,
+          role: user.role || 'user',
+          plan: user.plan || 'free',
+          avatar: user.avatar || '',
+          isVerified: true
+        },
+        process.env.JWT_SECRET,
+        { expiresIn: '7d' }
+      );
+
+      // Chuyển hướng với token và thông tin user
+      const userInfo = JSON.stringify({
+        _id: user._id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+        plan: user.plan,
+        isVerified: true,
+        avatar: user.avatar
+      });
+
+      console.log('✅ Đăng nhập Google thành công cho', email);
+      res.redirect(`${process.env.CLIENT_URL}/oauth/success?token=${token}&user=${encodeURIComponent(userInfo)}`);
+    } catch (error) {
+      console.error('❌ Lỗi Google OAuth:', error);
+      res.redirect(`${process.env.CLIENT_URL}/login?error=OAuthFail`);
     }
-
-    if (user.isLocked) {
-      console.error(`❌ Tài khoản ${user.email} đã bị khóa`);
-      return res.redirect(`${process.env.CLIENT_URL}/login?error=AccountLocked`);
-    }
-
-    const token = jwt.sign(
-      { id: user._id, email: user.email, role: user.role || 'user' },
-      process.env.JWT_SECRET,
-      { expiresIn: '7d' }
-    );
-    console.log(`✅ Đăng nhập Google thành công cho ${user.email}, token: ${token}`);
-    res.redirect(`${process.env.CLIENT_URL}/oauth-success?token=${token}`);
-  } catch (error) {
-    console.error('❌ Google OAuth Error:', error);
-    res.redirect(`${process.env.CLIENT_URL}/login?error=OAuthFail`);
   }
-});
-*/
+);
 
-// Thêm route POST /logout
+// Route đăng xuất
 router.post('/logout', authMiddleware, async (req, res) => {
   try {
     if (!req.user || !req.user._id) {
@@ -363,24 +467,99 @@ router.post('/logout', authMiddleware, async (req, res) => {
   }
 });
 
+// Route refresh token
 router.post('/refresh-token', async (req, res) => {
   const { token } = req.body;
   if (!token) return res.status(401).json({ message: 'Token không hợp lệ' });
 
   try {
-    jwt.verify(token, process.env.JWT_REFRESH_SECRET, (err, user) => {
-      if (err) return res.status(401).json({ message: 'Token không hợp lệ' });
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const user = await User.findById(decoded.id);
+    if (!user) {
+      return res.status(401).json({ message: 'Người dùng không tồn tại' });
+    }
 
-      const newToken = jwt.sign(
-        { id: user.id, role: user.role || 'user' },
-        process.env.JWT_SECRET,
-        { expiresIn: '1h' }
-      );
-      res.json({ token: newToken });
-    });
+    const newToken = jwt.sign(
+      { id: user._id, email: user.email, role: user.role || 'user', plan: user.plan || 'free' }, // Thêm plan vào token
+      process.env.JWT_SECRET,
+      { expiresIn: '7d' }
+    );
+    res.json({ token: newToken });
   } catch (error) {
     console.error('❌ Lỗi refresh token:', error);
-    res.status(500).json({ message: 'Lỗi máy chủ' });
+    res.status(401).json({ message: 'Token không hợp lệ hoặc hết hạn' });
+  }
+});
+// Upload avatar
+
+// 📤 Upload avatar từ máy hoặc từ URL
+router.post('/upload-avatar', authMiddleware, upload.single('avatar'), async (req, res) => {
+  try {
+    const userId = req.user._id;
+    const user = await User.findById(userId);
+    if (!user) return res.status(404).json({ message: 'Không tìm thấy người dùng' });
+
+    let newAvatarUrl = '';
+
+    // Trường hợp: upload từ máy
+    if (req.file) {
+      console.log('📤 Upload từ máy:', req.file.filename);
+      newAvatarUrl = `/uploads/${req.file.filename}`;
+    }
+    // Trường hợp: chọn ảnh chibi online (truyền qua body.avatarUrl)
+    else if (req.body.avatarUrl) {
+      console.log('🌐 Chọn ảnh từ URL:', req.body.avatarUrl);
+      newAvatarUrl = req.body.avatarUrl;
+    }
+
+    if (!newAvatarUrl) {
+      return res.status(400).json({ message: 'Không có ảnh nào được gửi' });
+    }
+
+    // Ghi lại lịch sử thay đổi
+    await EditHistory.create({
+      userId: user._id,
+      field: 'avatar',
+      oldValue: user.avatar || '',
+      newValue: newAvatarUrl,
+    });
+
+    user.avatar = newAvatarUrl;
+    await user.save();
+
+    res.json({ avatarUrl: newAvatarUrl });
+  } catch (error) {
+    console.error('❌ Lỗi khi upload avatar:', error);
+    res.status(500).json({ message: 'Lỗi server khi upload avatar' });
+  }
+});
+
+
+// Lấy lịch sử chỉnh sửa
+router.get('/edit-history', authMiddleware, async (req, res) => {
+  try {
+    console.log('📥 Đang truy vấn lịch sử cho user:', req.user._id);
+    const history = await EditHistory.find({ userId: req.user._id }).sort({ updatedAt: -1 });
+    res.json(history);
+  } catch (error) {
+    console.error('❌ Lỗi khi lấy lịch sử chỉnh sửa:', error.message);
+    res.status(500).json({ message: 'Lỗi server khi lấy lịch sử chỉnh sửa' });
+  }
+});
+
+// Cập nhật balance người dùng
+router.put('/balance', authMiddleware, async (req, res) => {
+  try {
+    const { balance } = req.body;
+    const user = await User.findById(req.user.id);
+    if (!user) return res.status(404).json({ message: 'Không tìm thấy người dùng' });
+
+    user.balance = balance;
+    await user.save();
+    res.json({ message: '✅ Đã cập nhật số dư thành công!', balance });
+  } catch (error) {
+    console.error('❌ Lỗi khi cập nhật balance:', error);
+    res.status(500).json({ message: 'Lỗi server khi cập nhật balance' });
   }
 });
 

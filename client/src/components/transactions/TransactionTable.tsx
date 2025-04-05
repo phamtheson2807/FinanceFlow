@@ -24,28 +24,11 @@ import {
 } from '@mui/material';
 import { motion } from 'framer-motion';
 import { useEffect, useMemo, useState } from 'react';
+import { Transaction, User } from '../../types/transaction.types';
 
-interface User {
-    _id: string;
-    name: string;
-    email: string;
-}
-
-interface Transaction {
-    _id: string;
-    user: User | null;
-    amount: number;
-    category: string;
-    type: 'income' | 'expense';
-    date: string;
-    description: string;
-    isViolating?: boolean;
-    createdAt?: string;
-    updatedAt?: string;
-}
-
+// Remove the local Transaction interface since it's imported
 interface TransactionTableProps {
-    transactions: Transaction[]; // Đảm bảo transactions luôn là mảng
+    transactions: Transaction[];
     onDelete: (transactionId: string) => void;
     onUpdate: (transaction: Transaction) => void;
 }

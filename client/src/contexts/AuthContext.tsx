@@ -13,6 +13,7 @@ interface AuthContextType {
   isAuthenticated: boolean;
   user: User | null;
   login: (email: string, password: string) => Promise<void>;
+  loginWithGoogle: (token: string) => Promise<void>;
   logout: () => void;
   loading: boolean;
 }
@@ -26,15 +27,18 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const fetchUser = useCallback(async (token: string) => {
     try {
-      console.log('Fetching user with token:', token.slice(0, 20) + '...');
+      if (!token || typeof token !== 'string') {
+        throw new Error('Token không hợp lệ');
+      }
+      console.log('📥 Đang lấy thông tin user với token:', token.slice(0, 20) + '...');
       const response = await axiosInstance.get('/api/auth/me');
-      console.log('User fetched:', response.data);
+      console.log('📥 User đã được lấy:', response.data);
       const userData = response.data.user;
       setUser(userData);
       setIsAuthenticated(true);
       localStorage.setItem('user', JSON.stringify(userData));
     } catch (error: any) {
-      console.error('Failed to fetch user:', {
+      console.error('❌ Lỗi khi lấy thông tin user:', {
         message: error.message,
         response: error.response?.data,
       });
@@ -48,12 +52,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const login = async (email: string, password: string) => {
     try {
-      console.log('Sending login request:', { email });
+      console.log('📤 Gửi yêu cầu đăng nhập:', { email });
       const response = await axiosInstance.post('/api/auth/login', { email, password });
       const { token, user: userData } = response.data;
-      console.log('Login response:', { token, userData });
+      console.log('📥 Phản hồi đăng nhập:', { token, userData });
 
-      // Lưu token nguyên dạng từ backend (có Bearer)
       localStorage.setItem('token', token);
       localStorage.setItem('user', JSON.stringify(userData));
       console.log('📡 Token đã lưu:', token);
@@ -61,10 +64,32 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       setUser(userData);
       setIsAuthenticated(true);
     } catch (error: any) {
-      console.error('Login failed:', {
+      console.error('❌ Đăng nhập thất bại:', {
         message: error.message,
         response: error.response?.data,
       });
+      throw error;
+    }
+  };
+
+  const loginWithGoogle = async (token: string) => {
+    try {
+      if (!token || typeof token !== 'string') {
+        throw new Error('Token Google không hợp lệ');
+      }
+      console.log('📤 Đang xử lý đăng nhập Google với token:', token.slice(0, 20) + '...');
+      localStorage.setItem('token', token);
+      console.log('📡 Token Google đã lưu:', token);
+      await fetchUser(token);
+    } catch (error: any) {
+      console.error('❌ Đăng nhập Google thất bại:', {
+        message: error.message,
+        response: error.response?.data,
+      });
+      localStorage.removeItem('token');
+      localStorage.removeItem('user');
+      setUser(null);
+      setIsAuthenticated(false);
       throw error;
     }
   };
@@ -75,33 +100,40 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     setUser(null);
     setIsAuthenticated(false);
     console.log('✅ Đã đăng xuất');
+    window.location.href = '/login'; // Chuyển hướng sau khi đăng xuất
   };
 
   useEffect(() => {
     const initializeAuth = async () => {
-      const token = localStorage.getItem('token');
-      const storedUser = localStorage.getItem('user');
+      try {
+        const token = localStorage.getItem('token');
+        const storedUser = localStorage.getItem('user');
 
-      if (token) {
-        try {
+        if (token) {
           if (storedUser) {
-            const parsedUser = JSON.parse(storedUser);
-            setUser(parsedUser);
-            setIsAuthenticated(true);
+            try {
+              const parsedUser = JSON.parse(storedUser);
+              setUser(parsedUser);
+              setIsAuthenticated(true);
+            } catch (parseError) {
+              console.error('❌ Lỗi khi parse user từ localStorage:', parseError);
+              localStorage.removeItem('user');
+            }
           }
           await fetchUser(token);
-        } catch (error) {
-          console.error('❌ Khởi tạo auth thất bại:', error);
         }
+      } catch (error) {
+        console.error('❌ Khởi tạo auth thất bại:', error);
+      } finally {
+        setLoading(false);
       }
-      setLoading(false);
     };
 
     initializeAuth();
   }, [fetchUser]);
 
   return (
-    <AuthContext.Provider value={{ isAuthenticated, user, login, logout, loading }}>
+    <AuthContext.Provider value={{ isAuthenticated, user, login, loginWithGoogle, logout, loading }}>
       {children}
     </AuthContext.Provider>
   );
@@ -110,7 +142,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 export const useAuth = () => {
   const context = useContext(AuthContext);
   if (!context) {
-    throw new Error('useAuth must be used within an AuthProvider');
+    throw new Error('useAuth phải được sử dụng trong AuthProvider');
   }
   return context;
 };

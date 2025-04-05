@@ -1,6 +1,9 @@
 const jwt = require('jsonwebtoken');
 const User = require('../models/User');
 const mongoose = require('mongoose');
+const { OAuth2Client } = require('google-auth-library');
+
+const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
 const authMiddleware = async (req, res, next) => {
   const authHeader = req.headers.authorization || req.header('Authorization') || req.headers['authorization'];
@@ -36,13 +39,15 @@ const authMiddleware = async (req, res, next) => {
     }
 
     req.user = {
-      _id: user._id,
+      _id: user._id.toString(), // Chuyển thành chuỗi
       name: user.name,
       email: user.email,
-      role: user.role || 'user',
+      role: decoded.role || user.role || 'user',
+      plan: decoded.plan || user.plan || 'free',
       isVerified: user.isVerified || false,
       isLocked: user.isLocked || false,
     };
+
     console.log('📡 User từ database:', req.user);
 
     if (!req.user.isVerified) {
@@ -57,7 +62,12 @@ const authMiddleware = async (req, res, next) => {
 
     next();
   } catch (err) {
-    console.error('❌ Lỗi xác thực token:', { message: err.message, name: err.name, token: authHeader || 'Không có token', stack: err.stack });
+    console.error('❌ Lỗi xác thực token:', {
+      message: err.message,
+      name: err.name,
+      token: authHeader || 'Không có token',
+      stack: err.stack,
+    });
     return res.status(401).json({ message: 'Token không hợp lệ hoặc đã hết hạn' });
   }
 };
@@ -71,4 +81,70 @@ const isAdmin = (req, res, next) => {
   }
 };
 
-module.exports = { authMiddleware, isAdmin };
+// Xử lý xác thực Google OAuth2
+const googleAuth = async (req, res) => {
+  try {
+    console.log('📱 Google auth request:', req.body);
+    const { credential } = req.body;
+
+    if (!credential) {
+      console.error('❌ Không có credential từ Google');
+      return res.status(400).json({ message: 'Thiếu thông tin xác thực từ Google' });
+    }
+
+    const ticket = await client.verifyIdToken({
+      idToken: credential,
+      audience: process.env.GOOGLE_CLIENT_ID,
+    });
+
+    const payload = ticket.getPayload();
+    console.log('✅ Google verify success:', payload);
+
+    const { email, name, picture, sub: googleId } = payload;
+
+    let user = await User.findOne({ email });
+
+    if (!user) {
+      user = new User({
+        name,
+        email,
+        googleId,
+        avatar: picture,
+        isVerified: true,
+        role: 'user',
+        plan: 'free',
+      });
+      await user.save();
+      console.log('✅ Tạo người dùng mới từ Google:', email);
+    }
+
+    const token = jwt.sign(
+      {
+        id: user._id.toString(), // Chuyển thành chuỗi
+        email: user.email,
+        role: user.role,
+        plan: user.plan,
+      },
+      process.env.JWT_SECRET,
+      { expiresIn: '7d' }
+    );
+
+    res.json({
+      token,
+      user: {
+        id: user._id.toString(), // Chuyển thành chuỗi
+        name: user.name,
+        email: user.email,
+        role: user.role,
+        plan: user.plan,
+        avatar: user.avatar,
+        isVerified: user.isVerified,
+      },
+    });
+  } catch (error) {
+    console.error('❌ Google auth error:', error);
+    res.status(500).json({ message: 'Lỗi xác thực Google: ' + error.message });
+  }
+};
+
+module.exports = { authMiddleware, isAdmin, googleAuth };

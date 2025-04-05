@@ -30,28 +30,29 @@ console.log('🔑 JWT_SECRET:', process.env.JWT_SECRET);
 
 // Middleware
 app.use(express.json());
-
-app.use(cors({
-  origin: 'http://localhost:3000',
-  methods: ['GET', 'HEAD', 'PUT', 'PATCH', 'POST', 'DELETE'],
-  allowedHeaders: ['Content-Type', 'Authorization'],
-  credentials: true,
-}));
+app.use(
+  cors({
+    origin: 'http://localhost:3000',
+    methods: ['GET', 'HEAD', 'PUT', 'PATCH', 'POST', 'DELETE'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
+    credentials: true,
+  })
+);
 app.options('*', cors());
 
-// Move session middleware before passport
-app.use(session({
-  secret: process.env.SESSION_SECRET || 'supersecretkey',
-  resave: false,
-  saveUninitialized: false,
-  cookie: {
-    secure: process.env.NODE_ENV === 'production',
-    maxAge: 24 * 60 * 60 * 1000,
-  },
-}));
-
+app.use(
+  session({
+    secret: process.env.SESSION_SECRET || 'supersecretkey',
+    resave: false,
+    saveUninitialized: false,
+    cookie: {
+      secure: process.env.NODE_ENV === 'production',
+      maxAge: 24 * 60 * 60 * 1000,
+    },
+  })
+);
 app.use(passport.initialize());
-app.use(passport.session()); // Add this line
+app.use(passport.session());
 
 const swaggerOptions = {
   definition: {
@@ -91,7 +92,12 @@ const notificationsRoutes = require('./routes/notifications');
 const aiRoutes = require('./routes/ai');
 const settingsRoutes = require('./routes/settings');
 const supportRoutes = require('./routes/support');
+const subscriptionRoutes = require('./routes/subscription');
+const budgetRoutes = require('./routes/budget');
 
+app.use('/api/budgets', budgetRoutes);
+app.use('/uploads', express.static('uploads'));
+app.use('/api/subscription', subscriptionRoutes);
 app.use('/api/ai', aiRoutes);
 app.use('/api/settings', settingsRoutes);
 app.use('/api/auth', authRoutes);
@@ -104,6 +110,7 @@ app.use('/api/savings', savingsRoutes);
 app.use('/api', notificationsRoutes);
 app.use('/api/support', supportRoutes);
 
+// Socket.IO logic (giữ nguyên)
 io.use((socket, next) => {
   const token = socket.handshake.auth.token;
   if (!token) {
@@ -252,9 +259,12 @@ process.on('unhandledRejection', (reason, promise) => {
 const PORT = process.env.PORT || 5000;
 server.listen(PORT, () => {
   console.log(`🚀 Server (Express + WebSocket) running on http://localhost:${PORT}`);
-  console.log('Routes đã gắn:', app._router.stack
-    .filter(r => r.route)
-    .map(r => `${r.route.path} (${Object.keys(r.route.methods).join(', ')})`));
+  console.log(
+    'Routes đã gắn:',
+    app._router.stack
+      .filter((r) => r.route)
+      .map((r) => `${r.route.path} (${Object.keys(r.route.methods).join(', ')})`)
+  );
 }).on('error', (err) => {
   console.error('❌ Lỗi khởi động server:', err);
 });

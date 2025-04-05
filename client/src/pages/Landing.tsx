@@ -1,6 +1,6 @@
 import { BarChart, Savings, Security, Star, TrendingUp } from '@mui/icons-material';
 import { Avatar, Box, Button, Card, Container, Grid, Typography } from '@mui/material';
-import { Particles } from '@tsparticles/react';
+import Particles, { initParticlesEngine } from '@tsparticles/react'; // Sử dụng initParticlesEngine
 import { loadSlim } from '@tsparticles/slim';
 import { motion } from 'framer-motion';
 import { useCallback, useEffect, useRef, useState } from 'react';
@@ -15,9 +15,16 @@ const Landing = () => {
   const springConfig = { type: 'spring', stiffness: 200, damping: 25 };
   const [particlesLoaded, setParticlesLoaded] = useState(false);
 
+  // Khởi tạo Particles engine
   const particlesInit = useCallback(async () => {
-    await loadSlim(window.tsParticles);
-    setParticlesLoaded(true);
+    try {
+      await initParticlesEngine(async (engine) => {
+        await loadSlim(engine); // Load slim engine
+      });
+      setParticlesLoaded(true);
+    } catch (error) {
+      console.error('Failed to initialize particles:', error);
+    }
   }, []);
 
   useEffect(() => {
@@ -107,8 +114,8 @@ const Landing = () => {
             justifyContent: 'space-between',
             alignItems: 'center',
             flexWrap: 'wrap',
-            height: { xs: 60, sm: 70 }, // Đặt chiều cao cố định cho Header
-            py: 0, // Xóa padding dọc để chiều cao chính xác
+            height: { xs: 60, sm: 70 },
+            py: 0,
           }}
         >
           <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.6 }}>
@@ -118,10 +125,10 @@ const Landing = () => {
                 src={FinanceLogo}
                 alt="Finance Manager Logo"
                 sx={{
-                  height: { xs: 100, sm: 100 }, // Giữ kích thước logo lớn
+                  height: { xs: 100, sm: 100 },
                   width: 'auto',
-                  objectFit: 'contain', // Đảm bảo logo không bị méo
-                  maxHeight: { xs: 60, sm: 70 }, // Giới hạn chiều cao tối đa để không vượt quá Header
+                  objectFit: 'contain',
+                  maxHeight: { xs: 60, sm: 70 },
                 }}
               />
               <Typography
@@ -187,6 +194,7 @@ const Landing = () => {
         </Container>
       </Box>
 
+      {/* Các section khác giữ nguyên */}
       {/* Hero Section */}
       <Container sx={{ pt: { xs: 12, sm: 18 }, pb: { xs: 8, sm: 14 }, position: 'relative', zIndex: 2 }}>
         <Grid container spacing={{ xs: 3, sm: 5 }} alignItems="center">
@@ -545,14 +553,8 @@ const Landing = () => {
         </motion.div>
       </Container>
 
-      {/* Footer với logo, các liên kết bên trái và copyright bên phải */}
-      <Box
-        sx={{
-          background: '#0A0A23',
-          position: 'relative',
-          zIndex: 2,
-        }}
-      >
+      {/* Footer */}
+      <Box sx={{ background: '#0A0A23', position: 'relative', zIndex: 2 }}>
         <Container
           sx={{
             display: 'flex',
@@ -560,32 +562,23 @@ const Landing = () => {
             justifyContent: 'space-between',
             flexWrap: 'wrap',
             gap: { xs: 1, sm: 2 },
-            height: { xs: 50, sm: 60 }, // Đặt chiều cao cố định cho Footer
-            py: 0, // Xóa padding dọc để chiều cao chính xác
+            height: { xs: 50, sm: 60 },
+            py: 0,
           }}
         >
-          {/* Logo và các liên kết bên trái */}
-          <Box
-            sx={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: { xs: 1.5, sm: 2.5 },
-            }}
-          >
-            {/* Logo */}
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: { xs: 1.5, sm: 2.5 } }}>
             <Box
               component={motion.img}
               src={FinanceLogo}
               alt="Finance Manager Logo"
               sx={{
-                height: { xs: 100, sm: 100 }, // Giữ kích thước logo lớn
+                height: { xs: 100, sm: 100 },
                 width: 'auto',
-                objectFit: 'contain', // Đảm bảo logo không bị méo
-                maxHeight: { xs: 50, sm: 60 }, // Giới hạn chiều cao tối đa để không vượt quá Footer
+                objectFit: 'contain',
+                maxHeight: { xs: 50, sm: 60 },
               }}
               whileHover={{ scale: 1.1 }}
             />
-            {/* Các liên kết */}
             {['Về chúng tôi', 'Chính sách', 'Hỗ trợ'].map((text, idx) => (
               <motion.div key={idx} whileHover={{ y: -3 }}>
                 <Button
@@ -604,8 +597,6 @@ const Landing = () => {
               </motion.div>
             ))}
           </Box>
-
-          {/* Copyright bên phải */}
           <Typography
             sx={{
               color: '#A1A1AA',

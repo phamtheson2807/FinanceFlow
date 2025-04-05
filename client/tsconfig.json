@@ -16,7 +16,14 @@
     "isolatedModules": true,
     "noEmit": true,
     "jsx": "react-jsx",
-    "types": ["node", "recharts", "axios", "framer-motion", "mongoose"], // Thêm các type cần thiết
+    "typeRoots": [
+      "./node_modules/@types",
+      "./types"
+    ],
+    "types": [
+      "node",
+      "recharts"
+    ],
     "paths": {
       "models/*": ["../models/*"],
       "components/*": ["components/*"],
@@ -25,5 +32,6 @@
       "pages/admin/*": ["pages/admin/*"]
     }
   },
-  "include": ["src"]
+  "include": ["src", "src/pages/Admin.tsx"],
+  "exclude": ["node_modules"]
 }

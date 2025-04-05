@@ -1,4 +1,3 @@
-// src/App.tsx
 import CssBaseline from '@mui/material/CssBaseline';
 import { ThemeProvider as MuiThemeProvider } from '@mui/material/styles';
 import { BrowserRouter, Route, Routes } from 'react-router-dom';
@@ -13,27 +12,30 @@ import AdminLayout from './img/layouts/AdminLayout';
 import AboutUs from './pages/AboutUs';
 import Landing from './pages/Landing';
 import Policy from './pages/Policy';
-import ResetPassword from './pages/ResetPassword';
 import Support from './pages/Support';
 import ForgotPassword from './pages/oauth/ForgotPassword';
 import Login from './pages/oauth/Login';
 import OAuthHandler from './pages/oauth/OAuthHandler';
 import OAuthSuccess from './pages/oauth/OAuthSuccess';
 import Register from './pages/oauth/Register';
+import ResetPassword from './pages/oauth/ResetPassword';
 import VerifyEmail from './pages/oauth/VerifyEmail';
 
-// Dashboard Pages
-import AccountInfo from './pages/AccountInfo';
-import AiReport from './pages/AiReport';
+// User Dashboard Pages
+import PricingPage from './components/PricingPage'; // ✅ Thêm dòng này
 import Dashboard from './pages/Home';
-import Investments from './pages/Investments';
-import Notifications from './pages/Notifications';
-import Reports from './pages/Reports';
-import Savings from './pages/Savings';
-import Settings from './pages/Settings';
-import Transactions from './pages/Transactions';
+import AccountInfo from './pages/user/AccountInfo';
+import AiReport from './pages/user/AiReport';
+import BankIntegration from './pages/user/BankIntegration';
+import BudgetReport from './pages/user/BudgetReport';
+import BudgetSetup from './pages/user/BudgetSetup';
+import Investments from './pages/user/Investments';
+import Notifications from './pages/user/Notifications';
+import Reports from './pages/user/Reports';
+import Savings from './pages/user/Savings';
+import Settings from './pages/user/Settings';
 import SupportPage from './pages/user/SupportPage';
-
+import UserTransactions from './pages/user/UserTransactions';
 // Admin Pages
 import AccountPage from './pages/admin/AccountPage';
 import AdminNotifications from './pages/admin/AdminNotifications';
@@ -66,14 +68,15 @@ const AppContent = () => {
           <Route path="/verify-email" element={<VerifyEmail />} />
           <Route path="/oauth" element={<OAuthHandler />} />
           <Route path="/oauth-success" element={<OAuthSuccess />} />
+          <Route path="/pricing" element={<PricingPage />} /> {/* ✅ Route nâng cấp tài khoản */}
 
           {/* Standalone Transactions Route */}
-          <Route path="/transactions" element={<Transactions />} />
+          <Route path="/transactions" element={<UserTransactions />} />
 
-          {/* Dashboard Routes */}
+          {/* User Dashboard Routes */}
           <Route path="/dashboard" element={<Layout />}>
             <Route index element={<Dashboard />} />
-            <Route path="transactions" element={<Transactions />} />
+            <Route path="transactions" element={<UserTransactions />} />
             <Route path="savings" element={<Savings />} />
             <Route path="investments" element={<Investments />} />
             <Route path="reports" element={<Reports />} />
@@ -82,9 +85,12 @@ const AppContent = () => {
             <Route path="settings" element={<Settings />} />
             <Route path="ai-report" element={<AiReport />} />
             <Route path="support" element={<SupportPage />} />
+            <Route path="budget/setup" element={<BudgetSetup />} />
+            <Route path="reports/budget" element={<BudgetReport />} />
+            <Route path="bank" element={<BankIntegration />} />
           </Route>
 
-          {/* Standalone Statistics Route */}
+          {/* Standalone Statistics Page */}
           <Route path="/statistics" element={<FinancialStatistics />} />
 
           {/* Admin Routes */}
@@ -98,7 +104,7 @@ const AppContent = () => {
             <Route path="support" element={<AdminSupportPage />} />
           </Route>
 
-          {/* Fallback Route */}
+          {/* Fallback */}
           <Route path="*" element={<div>404 - Không tìm thấy trang</div>} />
         </Routes>
       </AuthProvider>

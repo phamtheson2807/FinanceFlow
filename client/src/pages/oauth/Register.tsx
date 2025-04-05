@@ -66,43 +66,45 @@ const Register = () => {
   // Tải script Turnstile và render widget
   useEffect(() => {
     const script = document.createElement('script');
-    script.src = 'https://challenges.cloudflare.com/turnstile/v0/api.js';
+    script.src = 'https://challenges.cloudflare.com/turnstile/v0/api.js?onload=onTurnstileLoad&render=explicit';
     script.async = true;
-    script.defer = true;
-    document.body.appendChild(script);
-
+  
     script.onload = () => {
-      if (window.turnstile && turnstileRef.current) {
-        // Làm sạch widget cũ nếu tồn tại
-        if (widgetIdRef.current) {
-          window.turnstile.remove(widgetIdRef.current);
+      try {
+        if (window.turnstile && turnstileRef.current) {
+          if (widgetIdRef.current) {
+            window.turnstile.remove(widgetIdRef.current);
+          }
+  
+          const widgetId = window.turnstile.render(turnstileRef.current, {
+            sitekey: '0x4AAAAAABBx1f9dbxt8kKvn',
+            callback: (token: string) => setCaptchaToken(token),
+            'error-callback': () => {
+              setError('Lỗi xác thực CAPTCHA. Vui lòng thử lại.');
+              setCaptchaToken(null);
+            },
+          });
+  
+          widgetIdRef.current = widgetId;
         }
-
-        // Render widget mới và lưu widget ID
-        const widgetId = window.turnstile.render(turnstileRef.current, {
-          sitekey: '0x4AAAAAABBx1f9dbxt8kKvn', // Sitekey của bạn
-          callback: (token: string) => {
-            setCaptchaToken(token);
-          },
-          'error-callback': (errorCode: string) => {
-            setError(`Lỗi CAPTCHA: ${errorCode}. Vui lòng thử lại.`);
-            setCaptchaToken(null);
-          },
-        });
-
-        widgetIdRef.current = widgetId; // Lưu widget ID
+      } catch (err) {
+        console.error('Lỗi khởi tạo CAPTCHA:', err);
+        setError('Không thể khởi tạo CAPTCHA. Vui lòng thử lại.');
       }
     };
-
+  
+    script.onerror = () => {
+      setError('Không thể tải CAPTCHA từ máy chủ. Kiểm tra mạng hoặc thử lại sau.');
+    };
+  
+    document.body.appendChild(script);
     return () => {
-      // Làm sạch khi component unmount
-      document.body.removeChild(script);
-      if (window.turnstile && widgetIdRef.current) {
+      if (widgetIdRef.current && window.turnstile) {
         window.turnstile.remove(widgetIdRef.current);
-        widgetIdRef.current = undefined;
       }
     };
-  }, []); // Dependency array rỗng để chỉ chạy một lần khi component mount
+  }, []);
+  
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

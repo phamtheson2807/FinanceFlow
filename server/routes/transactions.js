@@ -2,12 +2,14 @@ const express = require('express');
 const router = express.Router();
 const Transaction = require('../models/Transaction');
 const Category = require('../models/Categories');
+const Subscription = require('../models/Subscription');
 const { authMiddleware, isAdmin } = require('../middleware/auth');
 const mongoose = require('mongoose');
+const { checkLimit } = require('../middleware/checkLimit');
 
 router.get('/', authMiddleware, async (req, res) => {
     try {
-        const userId = req.user._id; // Sửa từ .id thành ._id
+        const userId = new mongoose.Types.ObjectId(req.user._id);
         console.log('📡 Nhận yêu cầu GET /api/transactions từ user:', userId);
         const { startDate, endDate, type, category, page = 1, limit = 10, sortBy = 'date', sortOrder = 'desc' } = req.query;
         const query = { user: userId };
@@ -48,8 +50,15 @@ router.get('/', authMiddleware, async (req, res) => {
 
 router.get('/stats', authMiddleware, async (req, res) => {
     try {
-        const userId = req.user._id; // Sửa từ .id thành ._id
+        const userId = req.user._id;
         console.log('📡 Nhận yêu cầu GET /api/transactions/stats từ user:', userId);
+
+        // Kiểm tra gói subscription
+        const subscription = await Subscription.findOne({ userId });
+        if (!subscription || subscription.plan !== 'pro') {
+            return res.status(403).json({ message: 'Tính năng thống kê chỉ dành cho gói Pro. Vui lòng nâng cấp!' });
+        }
+
         const stats = await Transaction.aggregate([
             { $match: { user: userId } },
             {
@@ -69,59 +78,79 @@ router.get('/stats', authMiddleware, async (req, res) => {
     }
 });
 
-router.post('/', authMiddleware, async (req, res) => {
-    try {
-        const userId = req.user._id; // Sửa từ .id thành ._id
-        console.log('📡 Nhận yêu cầu POST /api/transactions từ user:', userId, req.body);
-        const { type, amount, category, description, date } = req.body;
+// Route thêm giao dịch mới
+router.post('/', authMiddleware, checkLimit('transactions'), async (req, res) => {
+  try {
+    const userId = req.user._id;
+    console.log('📡 Nhận yêu cầu POST /api/transactions từ user:', userId, req.body);
+    const { type, amount, category, description, date } = req.body;
 
-        if (!['income', 'expense'].includes(type)) {
-            return res.status(400).json({ message: 'Loại giao dịch không hợp lệ. Chỉ chấp nhận "income" hoặc "expense".' });
+    // Kiểm tra gói subscription và giới hạn giao dịch
+    const subscription = await Subscription.findOne({ userId });
+    if (!subscription || subscription.plan === 'free') {
+        const transactionCount = await Transaction.countDocuments({ user: userId });
+        if (transactionCount >= 50) {
+            return res.status(403).json({ message: 'Bạn đã đạt giới hạn 50 giao dịch. Nâng cấp lên gói Pro để tiếp tục!' });
         }
-        if (amount <= 0) {
-            return res.status(400).json({ message: 'Số tiền phải lớn hơn 0.' });
-        }
-        if (!category || category.trim() === '') {
-            return res.status(400).json({ message: 'Danh mục không được để trống.' });
-        }
-
-        const existingCategory = await Category.findOne({ userId: userId, name: category });
-        if (!existingCategory) {
-            return res.status(400).json({ message: 'Danh mục không hợp lệ.' });
-        }
-
-        const incomeCategories = ['Lương', 'Thưởng'];
-        if (incomeCategories.includes(category) && type !== 'income') {
-            return res.status(400).json({ message: 'Danh mục "Lương" hoặc "Thưởng" phải là thu nhập (income).' });
-        }
-        if (!incomeCategories.includes(category) && type !== 'expense') {
-            return res.status(400).json({ message: 'Danh mục này phải là chi tiêu (expense).' });
-        }
-
-        const newTransaction = new Transaction({
-            user: userId,
-            type,
-            amount,
-            category,
-            description: description || '',
-            date: new Date(date),
-            paymentMethod: 'Tiền mặt',
-            status: 'completed',
-        });
-
-        await newTransaction.save();
-        console.log('✅ Đã tạo giao dịch:', newTransaction._id);
-        res.status(201).json(newTransaction);
-    } catch (err) {
-        console.error('❌ Lỗi khi thêm giao dịch:', err.stack);
-        res.status(500).json({ message: 'Lỗi máy chủ khi thêm giao dịch mới' });
     }
+
+    if (!['income', 'expense'].includes(type)) {
+        return res.status(400).json({ message: 'Loại giao dịch không hợp lệ. Chỉ chấp nhận "income" hoặc "expense".' });
+    }
+    if (amount <= 0) {
+        return res.status(400).json({ message: 'Số tiền phải lớn hơn 0.' });
+    }
+    if (!category || category.trim() === '') {
+        return res.status(400).json({ message: 'Danh mục không được để trống.' });
+    }
+
+    const existingCategory = await Category.findOne({ userId: userId, name: category });
+    if (!existingCategory) {
+        return res.status(400).json({ message: 'Danh mục không hợp lệ.' });
+    }
+
+    const incomeCategories = ['Lương', 'Thưởng'];
+    if (incomeCategories.includes(category) && type !== 'income') {
+        return res.status(400).json({ message: 'Danh mục "Lương" hoặc "Thưởng" phải là thu nhập (income).' });
+    }
+    if (!incomeCategories.includes(category) && type !== 'expense') {
+        return res.status(400).json({ message: 'Danh mục này phải là chi tiêu (expense).' });
+    }
+
+    const newTransaction = new Transaction({
+        user: userId,
+        type,
+        amount,
+        category,
+        description: description || '',
+        date: new Date(date),
+        paymentMethod: 'Tiền mặt',
+        status: 'completed',
+    });
+
+    await newTransaction.save();
+    console.log('✅ Đã tạo giao dịch:', newTransaction._id);
+    
+    // Tăng số lượng giao dịch sau khi thêm thành công
+    await User.findByIdAndUpdate(req.user._id, { $inc: { transactionCount: 1 } });
+    
+    res.status(201).json(newTransaction);
+  } catch (error) {
+    console.error('❌ Lỗi khi thêm giao dịch:', err.stack);
+    res.status(500).json({ message: 'Lỗi máy chủ khi thêm giao dịch mới' });
+  }
 });
 
 router.get('/trend', authMiddleware, async (req, res) => {
     try {
-        const userId = req.user._id; // Sửa từ .id thành ._id
+        const userId = req.user._id;
         console.log(`📡 Lấy xu hướng chi tiêu cho user: ${userId}`);
+
+        // Kiểm tra gói subscription
+        const subscription = await Subscription.findOne({ userId });
+        if (!subscription || subscription.plan !== 'pro') {
+            return res.status(403).json({ message: 'Tính năng xu hướng chi tiêu chỉ dành cho gói Pro. Vui lòng nâng cấp!' });
+        }
 
         const trendData = await Transaction.aggregate([
             { $match: { user: userId, type: 'expense' } },
@@ -151,7 +180,7 @@ router.get('/trend', authMiddleware, async (req, res) => {
 
 router.put('/:id', authMiddleware, async (req, res) => {
     try {
-        const userId = req.user._id; // Sửa từ .id thành ._id
+        const userId = req.user._id;
         console.log('📡 Nhận yêu cầu PUT /api/transactions/:id từ user:', userId, req.params.id, req.body);
         const transaction = await Transaction.findById(req.params.id);
         if (!transaction) return res.status(404).json({ message: 'Không tìm thấy giao dịch' });
@@ -203,7 +232,7 @@ router.put('/:id', authMiddleware, async (req, res) => {
 
 router.delete('/:id', authMiddleware, async (req, res) => {
     try {
-        const userId = req.user._id; // Sửa từ .id thành ._id
+        const userId = req.user._id;
         console.log('📡 Nhận yêu cầu DELETE /api/transactions/:id từ user:', userId, req.params.id);
         const transaction = await Transaction.findById(req.params.id);
         if (!transaction) return res.status(404).json({ message: 'Không tìm thấy giao dịch' });
@@ -222,7 +251,7 @@ router.delete('/:id', authMiddleware, async (req, res) => {
 
 router.get('/admin/transactions', authMiddleware, isAdmin, async (req, res) => {
     try {
-        const userId = req.user._id; // Sửa từ .id thành ._id
+        const userId = req.user._id;
         console.log('📡 Nhận yêu cầu GET /api/admin/transactions từ admin:', userId);
         const { startDate, endDate, type, category, page = 1, limit = 10, sortBy = 'date', sortOrder = 'desc' } = req.query;
         let query = {};

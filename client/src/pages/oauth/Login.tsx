@@ -21,9 +21,20 @@ import {
 import { Particles } from '@tsparticles/react';
 import { loadSlim } from '@tsparticles/slim';
 import { motion } from 'framer-motion';
+import jwtDecode from 'jwt-decode';
 import { useCallback, useEffect, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
+
+// Định nghĩa kiểu cho token được giải mã
+interface DecodedToken {
+  id: string;
+  name: string; // Thêm name
+  email: string;
+  role: string;
+  iat?: number;
+  exp?: number;
+}
 
 const MotionBox = motion(Box);
 const MotionButton = motion(Button);
@@ -51,50 +62,54 @@ const Login: React.FC = () => {
     particlesInit();
   }, [particlesInit]);
 
-  // Kiểm tra nếu có email đã lưu trong localStorage khi vào trang
   useEffect(() => {
     const savedEmail = localStorage.getItem('savedEmail');
     if (savedEmail) {
       setEmail(savedEmail);
-      setRememberMe(true); // Tự động tích checkbox nếu có email đã lưu
+      setRememberMe(true);
     }
   }, []);
 
   useEffect(() => {
     const params = new URLSearchParams(location.search);
-    const verified = params.get('verified');
+    const token = params.get('token');
     const oauthError = params.get('error');
-
-    if (verified === 'true') {
-      setSuccessMessage('✅ Xác thực email thành công! Bạn có thể đăng nhập.');
-    } else if (oauthError === 'OAuthFail') {
-      setError('❌ Đăng nhập Google thất bại. Vui lòng thử lại.');
-    } else if (oauthError === 'AccountLocked') {
-      setError('❌ Tài khoản của bạn đã bị khóa. Vui lòng liên hệ quản trị viên.');
-    } else if (oauthError === 'invalid_token') {
-      setError('❌ Token xác thực không hợp lệ hoặc đã hết hạn.');
+  
+    if (token) {
+      localStorage.setItem('token', token);
+      setSuccessMessage('✅ Đăng nhập Google thành công!');
+      const user = jwtDecode<DecodedToken>(token);
+      localStorage.setItem('user', JSON.stringify({ name: user.name, email: user.email, role: user.role }));
+      console.log('User decoded from token:', user);
+      if (user.role === 'admin') {
+        navigate('/admin');
+      } else {
+        navigate('/dashboard');
+      }
+    } else if (oauthError) {
+      setError(`❌ Đăng nhập Google thất bại: ${oauthError}`);
+      setLoading(false);
     }
-  }, [location]);
+  }, [location, navigate]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setError(null);
     setSuccessMessage(null);
-  
+
     try {
       await login(email, password);
-  
+
       if (rememberMe) {
         localStorage.setItem('savedEmail', email);
       } else {
         localStorage.removeItem('savedEmail');
       }
-  
-      // Thêm log để kiểm tra token
+
       const token = localStorage.getItem('token');
       console.log('✅ Token sau khi đăng nhập:', token);
-  
+
       const user = JSON.parse(localStorage.getItem('user') || '{}');
       if (user.role === 'admin') {
         navigate('/admin');
@@ -102,7 +117,6 @@ const Login: React.FC = () => {
         navigate('/dashboard');
       }
     } catch (err: any) {
-      // Cải thiện thông báo lỗi
       const errorMessage = err.response?.data?.message || 'Đăng nhập thất bại. Vui lòng kiểm tra email và mật khẩu.';
       setError(errorMessage);
       console.error('❌ Lỗi đăng nhập:', errorMessage);
@@ -112,9 +126,17 @@ const Login: React.FC = () => {
   };
 
   const handleGoogleLogin = () => {
-    window.location.href = 'http://localhost:5000/api/auth/google';
+    try {
+      setLoading(true);
+      setError(null);
+      console.log('Chuyển hướng đến Google OAuth');
+      window.location.href = 'http://localhost:5000/api/auth/google';
+    } catch (error: any) {
+      console.error('❌ Google login error:', error.message);
+      setError('Đăng nhập Google thất bại: ' + error.message);
+      setLoading(false);
+    }
   };
-
   return (
     <Box
       sx={{
@@ -182,26 +204,21 @@ const Login: React.FC = () => {
           width: '100%',
         }}
       >
-        {/* Hình ảnh cô gái - Giữ nguyên thuộc tính */}
         <Box
           sx={{
             flex: 1.5,
             display: { xs: 'none', md: 'block' },
-            pl: 30, // Giữ nguyên padding bên trái
-            pr: 1, // Giữ nguyên padding bên phải
+            pl: 30,
+            pr: 1,
           }}
         >
           <img
             src="https://fakebill.taobillgia.com/public/src/vtd/img/svg/log-in-girl.svg"
             alt="Log In Girl"
-            style={{
-              width: '100%',
-              maxWidth: '600px', // Giữ nguyên maxWidth
-            }}
+            style={{ width: '100%', maxWidth: '600px' }}
           />
         </Box>
 
-        {/* Form đăng nhập sát bên phải */}
         <Box
           sx={{
             flex: 1,
@@ -224,12 +241,7 @@ const Login: React.FC = () => {
           >
             <Typography
               variant="h4"
-              sx={{
-                fontFamily: "'Poppins', sans-serif",
-                fontWeight: 700,
-                color: '#FFFFFF',
-                mb: 1,
-              }}
+              sx={{ fontFamily: "'Poppins', sans-serif", fontWeight: 700, color: '#FFFFFF', mb: 1 }}
             >
               Chào mừng trở lại! 👋
             </Typography>
@@ -261,7 +273,11 @@ const Login: React.FC = () => {
             )}
 
             <Box component="form" onSubmit={handleSubmit}>
-              <MotionBox initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.5, delay: 0.2 }}>
+              <MotionBox
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ duration: 0.5, delay: 0.2 }}
+              >
                 <TextField
                   margin="normal"
                   required
@@ -298,7 +314,11 @@ const Login: React.FC = () => {
                 />
               </MotionBox>
 
-              <MotionBox initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.5, delay: 0.4 }}>
+              <MotionBox
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ duration: 0.5, delay: 0.4 }}
+              >
                 <TextField
                   margin="normal"
                   required
@@ -353,17 +373,11 @@ const Login: React.FC = () => {
                     <Checkbox
                       checked={rememberMe}
                       onChange={(e) => setRememberMe(e.target.checked)}
-                      sx={{
-                        color: '#A1A1AA',
-                        '&.Mui-checked': { color: '#A78BFA' },
-                      }}
+                      sx={{ color: '#A1A1AA', '&.Mui-checked': { color: '#A78BFA' } }}
                     />
                   }
                   label="Lưu đăng nhập"
-                  sx={{
-                    color: '#A1A1AA',
-                    '&:hover': { color: '#A78BFA' },
-                  }}
+                  sx={{ color: '#A1A1AA', '&:hover': { color: '#A78BFA' } }}
                 />
                 <Button
                   onClick={() => navigate('/forgot-password')}
@@ -419,6 +433,7 @@ const Login: React.FC = () => {
                 variant="outlined"
                 startIcon={<Google />}
                 onClick={handleGoogleLogin}
+                disabled={loading}
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 whileHover={{ scale: 1.05 }}
@@ -432,13 +447,10 @@ const Login: React.FC = () => {
                   borderColor: '#3A3A5A',
                   color: '#FFFFFF',
                   background: '#2A2A4A',
-                  '&:hover': {
-                    borderColor: '#A78BFA',
-                    background: '#3A3A5A',
-                  },
+                  '&:hover': { borderColor: '#A78BFA', background: '#3A3A5A' },
                 }}
               >
-                Đăng Nhập Bằng Google
+                {loading ? <CircularProgress size={24} sx={{ color: '#fff' }} /> : 'Đăng Nhập Bằng Google'}
               </MotionButton>
 
               <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 3 }}>

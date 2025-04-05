@@ -1,42 +1,42 @@
 const mongoose = require('mongoose');
+const EditHistory = require('./models/EditHistory'); // Import model EditHistory
 
-mongoose.connect('mongodb://localhost:27017/quanlythuchi', { // Sử dụng database của bạn: 'quanlythuchi'
-  useNewUrlParser: true,
-  useUnifiedTopology: true,
-}).then(async () => {
-  console.log('✅ Kết nối MongoDB thành công');
+// Kết nối MongoDB
+mongoose.connect('mongodb://localhost:27017/finance-manager')
+  .then(async () => {
+    console.log('✅ Kết nối MongoDB thành công');
+    console.log('EditHistory model:', EditHistory);
 
-  // Nạp model SupportSession
-  const SupportSession = require('./models/SupportSession');
+    try {
+      // Kiểm tra và khởi tạo collection nếu chưa tồn tại
+      const collections = await mongoose.connection.db.listCollections().toArray();
+      const collectionNames = collections.map((col) => col.name);
 
-  // Kiểm tra xem collection support_sessions đã có dữ liệu chưa
-  const sessionCount = await SupportSession.countDocuments();
-  if (sessionCount === 0) {
-    // Nếu chưa có dữ liệu, thêm một tài liệu mặc định
-    const initSession = new SupportSession({
-      userId: new mongoose.Types.ObjectId(), // Tạo một ObjectId giả lập
-      userName: 'Phạm Thế Sơn',
-      userEmail: 'phamtheson@gmail.com',
-      messages: [
-        {
-          sender: 'admin',
-          content: 'Tin nhắn khởi tạo từ hệ thống cho phiên hỗ trợ',
-          createdAt: new Date(),
-        },
-      ],
-      status: 'active',
-      unreadCount: 0,
-    });
-    await initSession.save();
-    console.log('✅ Đã tạo collection support_sessions với một phiên hỗ trợ mặc định');
-  } else {
-    console.log('✅ Collection support_sessions đã tồn tại, không cần khởi tạo');
-  }
+      // Kiểm tra collection 'edithistories'
+      if (!collectionNames.includes('edithistories')) {
+        console.log('⚠️ Collection edithistories chưa tồn tại, khởi tạo...');
+        await EditHistory.createCollection();
+      } else {
+        console.log('✅ Collection edithistories đã tồn tại, không cần khởi tạo');
+      }
 
-  // Đóng kết nối
-  mongoose.connection.close();
-  console.log('✅ Đã đóng kết nối MongoDB');
-}).catch((err) => {
-  console.error('❌ Lỗi kết nối hoặc khởi tạo:', err);
-  process.exit(1);
-});
+      // Kiểm tra tất cả bản ghi trong EditHistory (tùy chọn)
+      const editHistories = await EditHistory.find();
+      console.log(`🔍 Tìm thấy ${editHistories.length} bản ghi trong EditHistory`);
+      editHistories.forEach((history) => {
+        console.log(`✅ History ${history._id} - Field: ${history.field}, Old: ${history.oldValue}, New: ${history.newValue}`);
+      });
+
+      // Đóng kết nối
+      mongoose.connection.close();
+      console.log('✅ Đã đóng kết nối MongoDB');
+    } catch (error) {
+      console.error('❌ Lỗi khi xử lý dữ liệu:', error);
+      mongoose.connection.close();
+      process.exit(1);
+    }
+  })
+  .catch((err) => {
+    console.error('❌ Lỗi kết nối MongoDB:', err);
+    process.exit(1);
+  });
