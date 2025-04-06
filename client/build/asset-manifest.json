@@ -1,20 +1,21 @@
 {
   "files": {
     "main.css": "/static/css/main.e6c13ad2.css",
-    "main.js": "/static/js/main.7d9b3a4f.js",
+    "main.js": "/static/js/main.669570a2.js",
     "static/js/239.c67ca06e.chunk.js": "/static/js/239.c67ca06e.chunk.js",
     "static/js/977.e9b3370b.chunk.js": "/static/js/977.e9b3370b.chunk.js",
-    "static/js/732.135c5792.chunk.js": "/static/js/732.135c5792.chunk.js",
-    "static/media/finance.jpg": "/static/media/finance.fcc9dd26c855f93d95ee.jpg",
+    "static/js/732.9683d8fc.chunk.js": "/static/js/732.9683d8fc.chunk.js",
+    "static/media/finance.png": "/static/media/finance.7835e92645c884aeec9c.png",
+    "static/media/FinanceFlow.gif": "/static/media/FinanceFlow.fdb8758dc0f86e2e1936.gif",
     "static/media/FinanceLogo.svg": "/static/media/FinanceLogo.e8f79ba56a116f565de0f96b37ef8262.svg",
     "index.html": "/index.html",
     "main.e6c13ad2.css.map": "/static/css/main.e6c13ad2.css.map",
-    "main.7d9b3a4f.js.map": "/static/js/main.7d9b3a4f.js.map",
+    "main.669570a2.js.map": "/static/js/main.669570a2.js.map",
     "239.c67ca06e.chunk.js.map": "/static/js/239.c67ca06e.chunk.js.map",
-    "732.135c5792.chunk.js.map": "/static/js/732.135c5792.chunk.js.map"
+    "732.9683d8fc.chunk.js.map": "/static/js/732.9683d8fc.chunk.js.map"
   },
   "entrypoints": [
     "static/css/main.e6c13ad2.css",
-    "static/js/main.7d9b3a4f.js"
+    "static/js/main.669570a2.js"
   ]
 }

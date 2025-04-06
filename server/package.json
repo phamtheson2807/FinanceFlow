@@ -27,7 +27,6 @@
   },
   "scripts": {
     "start": "node index.js",
-    "seed": "node seed.js",
     "dev": "nodemon index.js"
   },
   "devDependencies": {

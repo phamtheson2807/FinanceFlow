@@ -32,7 +32,11 @@ console.log('🔑 JWT_SECRET:', process.env.JWT_SECRET);
 app.use(express.json());
 app.use(
   cors({
-    origin: 'http://localhost:3000',
+    origin: [
+      'http://localhost:3000',
+      'https://vocal-speculoos-dc51b5.netlify.app', // URL Netlify của bạn
+      'https://quanlythuchi.vercel.app' // URL Vercel của bạn (đã có trong render.yaml)
+    ],
     methods: ['GET', 'HEAD', 'PUT', 'PATCH', 'POST', 'DELETE'],
     allowedHeaders: ['Content-Type', 'Authorization'],
     credentials: true,
@@ -268,3 +272,11 @@ server.listen(PORT, () => {
 }).on('error', (err) => {
   console.error('❌ Lỗi khởi động server:', err);
 });
+
+// Thêm đoạn code này vào phần cấu hình CORS trong file index.js
+app.use(cors({
+  origin: process.env.CLIENT_URL || 'https://quanlythuchi.vercel.app',
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization']
+}));

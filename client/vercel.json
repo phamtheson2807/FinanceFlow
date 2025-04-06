@@ -1,0 +1,13 @@
+{
+  "rewrites": [
+    { "source": "/(.*)", "destination": "/index.html" }
+  ],
+  "env": {
+    "REACT_APP_API_URL": "https://quanlythuchi-backend.onrender.com/api",
+    "REACT_APP_GEMINI_API_KEY": "AIzaSyDgxajhquGhXa49GLihn_GlNjeJn0-26lE",
+    "REACT_APP_STRIPE_PUBLISHABLE_KEY": "pk_test_51R6SFdJ0EYLbnLTiWkEe5KrRUd6XiU8w5YReJTjVjKDKYRCC6C2Wiq3uQHaZCwwuzErUfmbhJ2X4VRLm4ucj85wg00sySUeMf4"
+  },
+  "buildCommand": "npm run build",
+  "outputDirectory": "build",
+  "framework": "create-react-app"
+}

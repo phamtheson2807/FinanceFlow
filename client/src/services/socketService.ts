@@ -13,7 +13,12 @@ export const initSocket = (token: string) => {
     throw new Error('Token không tồn tại');
   }
 
-  socket = io('http://localhost:5000', { // Sửa từ ws:// thành http://
+  // Thay đổi URL từ localhost sang URL backend đã triển khai
+  const socketUrl = process.env.REACT_APP_API_URL 
+    ? process.env.REACT_APP_API_URL.replace('/api', '') 
+    : 'https://quanlythuchi-backend.onrender.com';
+  
+  socket = io(socketUrl, {
     auth: { token: `Bearer ${token}` },
     transports: ['websocket'],
     reconnection: true,

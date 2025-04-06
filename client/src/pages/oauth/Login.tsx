@@ -213,7 +213,7 @@ const Login: React.FC = () => {
           }}
         >
           <img
-            src="https://fakebill.taobillgia.com/public/src/vtd/img/svg/log-in-girl.svg"
+            src="https://app.taobillgia.com/public/src/vtd/img/svg/log-in-girl.svg"
             alt="Log In Girl"
             style={{ width: '100%', maxWidth: '600px' }}
           />

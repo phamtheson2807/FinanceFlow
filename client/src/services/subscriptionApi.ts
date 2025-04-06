@@ -1,7 +1,8 @@
 // src/services/subscriptionApi.ts
 import axios from 'axios';
+import config from '../config';
 
-const API_URL = 'http://localhost:5000/api/subscription';
+const API_URL = `${config.apiUrl}/subscription`;
 
 export const getSubscriptionStatus = async () => {
   const token = localStorage.getItem('token');

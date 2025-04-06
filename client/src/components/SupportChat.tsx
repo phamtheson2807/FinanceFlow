@@ -11,7 +11,9 @@ import {
 import { useEffect, useRef, useState } from 'react';
 import { io, Socket } from 'socket.io-client';
 import { useAuth } from '../contexts/AuthContext';
+import config from '../config'; // Add import for config
 
+// Unused interface can be removed or kept if needed for future use
 interface User {
   _id: string;
   name: string;
@@ -46,12 +48,13 @@ const SupportChat = () => {
   const messagesEndRef = useRef<null | HTMLDivElement>(null);
   const [chatSession, setChatSession] = useState<ChatSession | null>(null);
 
+  // Thay đổi URL tuyệt đối trong fetchChatHistory
   const fetchChatHistory = async () => {
     if (!user?._id) return;
     
     try {
       setIsLoading(true);
-      const response = await fetch(`http://localhost:5000/api/support/chat/${user._id}`, {
+      const response = await fetch(`${config.apiUrl}/support/chat/${user._id}`, {
         headers: {
           Authorization: `Bearer ${localStorage.getItem('token')}`
         }
@@ -67,19 +70,20 @@ const SupportChat = () => {
       setIsLoading(false);
     }
   };
-
+  
+  // Thay đổi URL tuyệt đối trong useEffect
   useEffect(() => {
     if (!user?._id) return;
-
+  
     const token = localStorage.getItem('token');
     if (!token) return;
-
-    const newSocket = io('http://localhost:5000', {
+  
+    const newSocket = io(config.apiUrl.replace('/api', ''), {
       auth: { token: token.startsWith('Bearer ') ? token.split(' ')[1] : token },
       transports: ['websocket', 'polling'],
       reconnection: true,
     });
-
+  
     newSocket.on('connect', () => {
       console.log('Connected to support chat');
       fetchChatHistory();
@@ -94,7 +98,7 @@ const SupportChat = () => {
     return () => {
       newSocket?.close();
     };
-  }, [user?._id]);
+  }, [user?._id, fetchChatHistory]); // Add fetchChatHistory to dependencies
 
   const handleSend = async () => {
     if (!input.trim() || !socket || !user?._id) return;
