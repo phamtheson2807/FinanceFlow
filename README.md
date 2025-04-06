@@ -118,6 +118,11 @@ FinanceFlow/
 
 ## 📄 Bản quyền
 
+> ⚠️ Dự án này được phát triển là một đồ án tốt nghiệp và **chỉ được sử dụng cho mục đích học tập, nghiên cứu**.  
+> ❌ Nghiêm cấm sử dụng cho mục đích thương mại khi chưa được sự cho phép của tác giả.
+
+
+
 © 2025 [Phạm Thế Sơn](https://github.com/phamtheson2807)  
 Dự án này được phát hành theo giấy phép [MIT License](LICENSE).
 
