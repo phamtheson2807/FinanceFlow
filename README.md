@@ -1,46 +1,126 @@
-# Getting Started with Create React App
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+# 💰 Ứng dụng Quản lý Thu Chi Cá Nhân
 
-## Available Scripts
+Ứng dụng web giúp người dùng theo dõi thu nhập, chi tiêu, tạo báo cáo và lập kế hoạch tài chính cá nhân một cách **khoa học, trực quan và bảo mật**.
 
-In the project directory, you can run:
+---
 
-### `npm start`
+## 🧠 Tính năng nổi bật
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in the browser.
+- 👤 Đăng ký, đăng nhập, xác thực người dùng bằng JWT (HttpOnly cookie)
+- ➕ Thêm, sửa, xoá các khoản thu nhập và chi tiêu
+- 🏷️ Phân loại giao dịch theo danh mục (ăn uống, đi lại, giải trí, đầu tư, tiết kiệm…)
+- 📈 Báo cáo tài chính trực quan bằng biểu đồ (Recharts / Chart.js)
+- 📊 Thống kê theo ngày, tháng, năm, danh mục
+- 🧾 Xuất báo cáo PDF, Excel
+- 🌓 Chế độ sáng / tối (Dark / Light mode)
+- 📧 Gửi email xác thực, OTP, và thông báo nhắc chi tiêu
 
-The page will reload if you make edits.\
-You will also see any lint errors in the console.
+---
 
-### `npm test`
+## 🛠️ Công nghệ sử dụng
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+### 💻 Frontend (React + TypeScript)
 
-### `npm run build`
+| Công nghệ         | Mô tả                           |
+|------------------|---------------------------------|
+| ⚛️ React 18       | Thư viện giao diện              |
+| 📘 TypeScript     | Ngôn ngữ có kiểm tra kiểu       |
+| 🎨 MUI v5         | Giao diện Material Design       |
+| 🔄 Redux Toolkit  | Quản lý trạng thái              |
+| 📊 Recharts       | Vẽ biểu đồ thống kê             |
+| 🌐 Axios          | Gọi API với interceptors        |
+| 🎞️ Framer Motion | Animation mượt mà               |
+| 🔐 JWT Cookie     | Quản lý phiên đăng nhập an toàn |
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+### 🖥️ Backend (Node.js + Express)
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+| Công nghệ         | Mô tả                               |
+|------------------|-------------------------------------|
+| 🚀 Node.js        | Môi trường chạy JavaScript backend |
+| 🌐 Express.js     | Framework xây dựng REST API        |
+| 🗄️ MongoDB        | Lưu trữ dữ liệu                     |
+| 🔐 JWT + Cookies  | Xác thực an toàn, bảo mật cao      |
+| 📧 Nodemailer     | Gửi email xác thực / OTP           |
+| 🧾 ExcelJS, PDFKit| Xuất báo cáo PDF, Excel            |
+| 🖼️ Multer         | Upload ảnh đại diện người dùng     |
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+---
 
-### `npm run eject`
+## 🚀 Cài đặt và chạy ứng dụng
 
-**Note: this is a one-way operation. Once you `eject`, you can’t go back!**
+### 📦 Yêu cầu hệ thống
 
-If you aren’t satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+- Node.js >= 18.x
+- npm
+- MongoDB local hoặc MongoDB Atlas
 
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you’re on your own.
+---
 
-You don’t have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn’t feel obligated to use this feature. However we understand that this tool wouldn’t be useful if you couldn’t customize it when you are ready for it.
+### 📁 Clone project
 
-## Learn More
+```bash
+git clone https://github.com/phamtheson2807/FinanceFlow.git
+cd FinanceFlow
+```
 
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
+---
 
-To learn React, check out the [React documentation](https://reactjs.org/).
+### 🖥️ Cài đặt và chạy Backend
+
+```bash
+cd server
+npm install
+cp .env.example .env
+```
+
+> 👉 Mở file `.env` và điền thông tin:
+```
+PORT=5000
+MONGO_URI=mongodb://localhost:27017/financeflow
+JWT_SECRET=your_jwt_secret
+EMAIL_USER=your_email@gmail.com
+EMAIL_PASS=your_email_password
+CLIENT_URL=http://localhost:3000
+```
+
+```bash
+npm run dev
+```
+
+> Server sẽ chạy tại: `http://localhost:5000`
+
+---
+
+### 💻 Cài đặt và chạy Frontend
+
+```bash
+cd client
+npm install
+npm run dev
+```
+
+> Ứng dụng frontend sẽ chạy tại: `http://localhost:3000`  
+> Và tự động gọi API tới `http://localhost:5000/api`
+
+---
+
+### 📂 Cấu trúc thư mục
+
+```bash
+FinanceFlow/
+├── client/       # Frontend React + TypeScript
+├── server/       # Backend Node.js + Express
+└── README.md     # Tài liệu hướng dẫn
+```
+
+---
+
+## 📄 Bản quyền
+
+© 2025 [Phạm Thế Sơn](https://github.com/phamtheson2807)  
+Dự án này được phát hành theo giấy phép [MIT License](LICENSE).
+
+---
+
+> Cảm ơn bạn đã sử dụng ứng dụng! Nếu thấy hữu ích hãy ⭐ project này để ủng hộ nhé 💖
