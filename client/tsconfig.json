@@ -1,0 +1,37 @@
+{
+  "compilerOptions": {
+    "baseUrl": "src",
+    "target": "es5",
+    "lib": ["dom", "dom.iterable", "esnext"],
+    "allowJs": true,
+    "skipLibCheck": true,
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
+    "strict": true,
+    "forceConsistentCasingInFileNames": true,
+    "noFallthroughCasesInSwitch": true,
+    "module": "esnext",
+    "moduleResolution": "node",
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "noEmit": true,
+    "jsx": "react-jsx",
+    "typeRoots": [
+      "./node_modules/@types",
+      "./types"
+    ],
+    "types": [
+      "node",
+      "recharts"
+    ],
+    "paths": {
+      "models/*": ["../models/*"],
+      "components/*": ["components/*"],
+      "components/users/*": ["components/users/*"],
+      "pages/*": ["pages/*"],
+      "pages/admin/*": ["pages/admin/*"]
+    }
+  },
+  "include": ["src", "src/pages/Admin.tsx"],
+  "exclude": ["node_modules"]
+}

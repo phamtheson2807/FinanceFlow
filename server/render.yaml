@@ -1,0 +1,53 @@
+services:
+  - type: web
+    name: quanlythuchi-backend
+    env: node
+    buildCommand: npm install
+    startCommand: node index.js
+    envVars:
+      - key: NODE_VERSION
+        value: 16
+      - key: JWT_SECRET
+        value: supersecretkey
+      - key: JWT_REFRESH_SECRET
+        value: refreshsecret
+      - key: PORT
+        value: 5000
+      - key: MONGODB_URI
+        sync: false
+      - key: CLIENT_URL
+        value: https://quanlythuchi.vercel.app
+      - key: SERVER_URL
+        value: https://quanlythuchi-backend.onrender.com
+      - key: GOOGLE_CLIENT_ID
+        value: 629534692975-c354cbq8b9gscvdtgrmrpa7q4v0t9ckj.apps.googleusercontent.com
+      - key: GOOGLE_CLIENT_SECRET
+        value: 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
+      - key: SESSION_SECRET
+        value: supersecretkey
+      - key: EMAIL_USER
+        value: thesonvpbq@gmail.com
+      - key: EMAIL_PASS
+        sync: false
+      - key: ADMIN_EMAIL
+        value: tsonseetinh@gmail.com
+      - key: REACT_APP_GEMINI_API_KEY
+        value: AIzaSyDgxajhquGhXa49GLihn_GlNjeJn0-26lE
+      - key: GOOGLE_CALLBACK_URL
+        value: https://quanlythuchi-backend.onrender.com/api/auth/google/callback
+      - key: STRIPE_SECRET_KEY
+        sync: false
+      - key: STRIPE_PUBLISHABLE_KEY
+        value: pk_test_51R6SFdJ0EYLbnLTiWkEe5KrRUd6XiU8w5YReJTjVjKDKYRCC6C2Wiq3uQHaZCwwuzErUfmbhJ2X4VRLm4ucj85wg00sySUeMf4
+  - type: web
+    name: quanlythuchi-api
+    env: node
+    buildCommand: npm install
+    startCommand: npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: MONGODB_URI
+        sync: false
+      - key: JWT_SECRET
+        sync: false
