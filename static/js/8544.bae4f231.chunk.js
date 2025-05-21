@@ -1,0 +1,2 @@
+"use strict";(self.webpackChunkquanlythuchi=self.webpackChunkquanlythuchi||[]).push([[8544],{68544:(e,a,c)=>{c.d(a,{A:()=>s});c(65043);const s=c.p+"static/media/FinanceLogo.e8f79ba56a116f565de0f96b37ef8262.svg"}}]);
+//# sourceMappingURL=8544.bae4f231.chunk.js.map

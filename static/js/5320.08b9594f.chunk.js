@@ -1,0 +1,2 @@
+"use strict";(self.webpackChunkquanlythuchi=self.webpackChunkquanlythuchi||[]).push([[5320],{25320:(e,n,t)=>{t.r(n),t.d(n,{default:()=>s});var a=t(65043),c=t(73216),r=t(70579);const s=()=>{const e=(0,c.Zp)();return(0,a.useEffect)((()=>{const n=new URLSearchParams(window.location.search).get("token");n?(localStorage.setItem("token",n),e("/dashboard")):e("/login?error=OAuthFailed")}),[e]),(0,r.jsx)("p",{children:"\u0110ang x\u1eed l\xfd \u0111\u0103ng nh\u1eadp..."})}}}]);
+//# sourceMappingURL=5320.08b9594f.chunk.js.map
