@@ -52,7 +52,7 @@ const Navbar = () => {
         title: notificationTitle,
         content: notificationContent,
         isActive,
-        recipients: [],
+        recipients: [] as string[], // hoặc kiểu phù hợp nếu không phải string
         createdBy: localStorage.getItem('userId') || '',
       };
 

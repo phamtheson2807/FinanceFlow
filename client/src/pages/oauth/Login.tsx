@@ -129,10 +129,9 @@ const Login: React.FC = () => {
     try {
       setLoading(true);
       setError(null);
-      console.log('Chuyển hướng đến Google OAuth');
+      // Đường dẫn này phải trỏ đến endpoint Google OAuth của backend
       window.location.href = 'http://localhost:5000/api/auth/google';
     } catch (error: any) {
-      console.error('❌ Google login error:', error.message);
       setError('Đăng nhập Google thất bại: ' + error.message);
       setLoading(false);
     }
@@ -213,8 +212,8 @@ const Login: React.FC = () => {
           }}
         >
           <img
-            src="https://app.taobillgia.com/public/src/vtd/img/svg/log-in-girl.svg"
-            alt="Log In Girl"
+            src="https://cedgroup.vn/img/log-in-girl.svg"
+            alt="Finance App Login"
             style={{ width: '100%', maxWidth: '600px' }}
           />
         </Box>
@@ -237,6 +236,7 @@ const Login: React.FC = () => {
               borderRadius: '20px 0 0 20px',
               background: '#1C1C3D',
               textAlign: 'center',
+              boxShadow: '0 8px 32px rgba(0, 0, 0, 0.1)',
             }}
           >
             <Typography

@@ -72,7 +72,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
-  const loginWithGoogle = async (token: string) => {
+  const loginWithGoogle = useCallback(async (token: string) => {
     try {
       if (!token || typeof token !== 'string') {
         throw new Error('Token Google không hợp lệ');
@@ -92,7 +92,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       setIsAuthenticated(false);
       throw error;
     }
-  };
+  }, [fetchUser]);
 
   const logout = () => {
     localStorage.removeItem('token');

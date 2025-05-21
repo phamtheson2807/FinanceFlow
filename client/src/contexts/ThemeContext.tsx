@@ -1,5 +1,6 @@
 import { createTheme, ThemeProvider as MuiThemeProvider, Theme } from '@mui/material/styles';
-import { createContext, ReactNode, useContext, useState } from 'react';
+import { createContext, ReactNode, useContext, useEffect, useState } from 'react';
+import axiosInstance from '../utils/axiosInstance';
 
 interface ThemeContextType {
   theme: Theme;
@@ -7,6 +8,7 @@ interface ThemeContextType {
   currency: string;
   toggleDarkMode: () => void;
   setCurrency: (newCurrency: string) => void;
+  formatCurrency: (amount: number) => string;
 }
 
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
@@ -64,21 +66,81 @@ const darkTheme = createTheme({
 });
 
 export const ThemeProvider = ({ children }: { children: ReactNode }) => {
-  const [darkMode, setDarkMode] = useState(false);
-  const [currency, setCurrency] = useState('VND'); // State để quản lý tiền tệ toàn cục
+  // Initialize from localStorage or defaults
+  const [darkMode, setDarkMode] = useState(() => {
+    const savedMode = localStorage.getItem('darkMode');
+    return savedMode ? JSON.parse(savedMode) : false;
+  });
+  
+  const [currency, setCurrencyState] = useState(() => {
+    const savedCurrency = localStorage.getItem('currency');
+    return savedCurrency || 'VND';
+  });
 
   const theme = darkMode ? darkTheme : lightTheme;
 
-  const toggleDarkMode = () => {
-    setDarkMode((prev) => !prev);
+  // Format currency helper function
+  const formatCurrency = (amount: number) => {
+    return new Intl.NumberFormat(currency === 'VND' ? 'vi-VN' : 'en-US', {
+      style: 'currency',
+      currency: currency
+    }).format(amount);
   };
+
+  const toggleDarkMode = async () => {
+    const newMode = !darkMode;
+    setDarkMode(newMode);
+    localStorage.setItem('darkMode', JSON.stringify(newMode));
+    try {
+      await axiosInstance.put('/api/settings', { darkMode: newMode });
+    } catch (error) {
+      console.error('Failed to update dark mode setting:', error);
+    }
+  };
+
+  const setCurrency = async (newCurrency: string) => {
+    setCurrencyState(newCurrency);
+    localStorage.setItem('currency', newCurrency);
+    try {
+      await axiosInstance.put('/api/settings', { currency: newCurrency });
+    } catch (error) {
+      console.error('Failed to update currency setting:', error);
+    }
+  };
+  
+  // Sync with settings from backend
+  useEffect(() => {
+    const fetchSettings = async () => {
+      try {
+        const response = await axiosInstance.get('/api/settings');
+        if (response.data) {
+          // Update darkMode if different from current state
+          if (response.data.darkMode !== darkMode) {
+            setDarkMode(response.data.darkMode);
+            localStorage.setItem('darkMode', JSON.stringify(response.data.darkMode));
+          }
+          
+          // Update currency if different from current state
+          if (response.data.currency && response.data.currency !== currency) {
+            setCurrencyState(response.data.currency);
+            localStorage.setItem('currency', response.data.currency);
+          }
+        }
+      } catch (error) {
+        console.error('Failed to fetch theme settings:', error);
+      }
+    };
+
+    fetchSettings();
+  }, [darkMode, currency]);
 
   const value = {
     theme,
     darkMode,
     currency,
     toggleDarkMode,
-    setCurrency, // Thêm hàm setCurrency để cập nhật tiền tệ
+    setCurrency,
+    formatCurrency
   };
 
   return (

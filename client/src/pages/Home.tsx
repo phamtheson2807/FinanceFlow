@@ -7,15 +7,17 @@ import {
   LocalMovies,
   Restaurant,
   Savings,
-  ShoppingCart
+  ShoppingCart,
+  TrendingUp
 } from '@mui/icons-material';
 import {
   Alert,
   Box,
   Button,
+  Card,
+  CardContent,
   Grid,
   Modal,
-  Paper,
   Skeleton,
   Tab,
   Table,
@@ -25,7 +27,7 @@ import {
   TableHead,
   TableRow,
   Tabs,
-  Typography,
+  Typography
 } from '@mui/material';
 import { motion } from 'framer-motion';
 import { useCallback, useEffect, useState } from 'react';
@@ -58,8 +60,13 @@ interface Transaction {
   description: string;
   amount: number;
   date: string;
-  category: string;
+  category: string; // ID danh mục
   type: 'income' | 'expense';
+}
+
+interface Category {
+  _id: string;
+  name: string;
 }
 
 interface Notification {
@@ -72,6 +79,12 @@ interface Notification {
   isRead?: boolean;
 }
 
+interface TransactionStats {
+  income: number;
+  expense: number;
+  balance: number;
+}
+
 const Dashboard = () => {
   const navigate = useNavigate();
   const { darkMode, currency } = useThemeContext();
@@ -82,10 +95,61 @@ const Dashboard = () => {
     investmentProgress: [],
   });
   const [transactions, setTransactions] = useState<Transaction[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [showNotification, setShowNotification] = useState(false);
   const [timeFilter, setTimeFilter] = useState<'day' | 'week' | 'month'>('week');
+  // Thêm state cho transactionStats
+  const [transactionStats, setTransactionStats] = useState<TransactionStats>({
+    income: 0,
+    expense: 0,
+    balance: 0,
+  });
+
+  // Styles mới
+  const cardStyle = {
+    background: darkMode 
+      ? 'linear-gradient(135deg, rgba(30, 41, 59, 0.95) 0%, rgba(30, 41, 59, 0.85) 100%)'
+      : 'linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(255, 255, 255, 0.85) 100%)',
+    borderRadius: '20px',
+    backdropFilter: 'blur(10px)',
+    border: `1px solid ${darkMode ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)'}`,
+    boxShadow: darkMode 
+      ? '0 8px 32px rgba(0, 0, 0, 0.3)'
+      : '0 8px 32px rgba(0, 0, 0, 0.1)',
+    transition: 'transform 0.3s ease, box-shadow 0.3s ease',
+    '&:hover': {
+      transform: 'translateY(-5px)',
+      boxShadow: darkMode 
+        ? '0 12px 40px rgba(0, 0, 0, 0.4)'
+        : '0 12px 40px rgba(0, 0, 0, 0.15)',
+    },
+  };
+
+  const statCardStyle = {
+    ...cardStyle,
+    p: 3,
+    height: '100%',
+    display: 'flex',
+    flexDirection: 'column',
+    justifyContent: 'space-between',
+  };
+
+  const buttonStyle = {
+    background: 'linear-gradient(45deg, #3B82F6 30%, #7C3AED 90%)',
+    color: '#fff',
+    borderRadius: '12px',
+    px: 3,
+    py: 1,
+    fontWeight: 600,
+    textTransform: 'none',
+    boxShadow: '0 4px 15px rgba(59, 130, 246, 0.3)',
+    '&:hover': {
+      background: 'linear-gradient(45deg, #2563EB 30%, #6D28D9 90%)',
+      boxShadow: '0 6px 20px rgba(59, 130, 246, 0.4)',
+    },
+  };
 
   // Fetch data từ API
   const fetchData = useCallback(
@@ -103,6 +167,7 @@ const Dashboard = () => {
     },
     []
   );
+
   // Hàm cập nhật balance trên server
   const updateUserBalance = useCallback(async (calculatedBalance: number) => {
     try {
@@ -118,16 +183,15 @@ const Dashboard = () => {
     if (data?.stats) {
       const { income = 0, expense = 0, investment = 0, savings = 0 } = data.stats;
       const balance = income - expense - investment - savings;
-  
+
       setDashboardData((prev) => ({
         ...prev,
         stats: { income, expense, investment, savings, balance },
       }));
-  
-      await updateUserBalance(balance); // 🆕 Gọi API cập nhật balance
+
+      await updateUserBalance(balance);
     }
   }, [fetchData, updateUserBalance]);
-  
 
   const fetchUserBalance = useCallback(async () => {
     const userData = await fetchData('/api/auth/me', 'Không thể tải số dư người dùng');
@@ -182,16 +246,31 @@ const Dashboard = () => {
         (a: Transaction, b: Transaction) => new Date(b.date).getTime() - new Date(a.date).getTime()
       );
       setTransactions(sortedTransactions);
-      const totalExpense = sortedTransactions
-        .filter((t: Transaction) => t.type === 'expense')
-        .reduce((sum: number, t: Transaction) => sum + t.amount, 0);
+
+      // Tính toán lại income, expense, balance từ transactions
       const totalIncome = sortedTransactions
         .filter((t: Transaction) => t.type === 'income')
         .reduce((sum: number, t: Transaction) => sum + t.amount, 0);
+      const totalExpense = sortedTransactions
+        .filter((t: Transaction) => t.type === 'expense')
+        .reduce((sum: number, t: Transaction) => sum + t.amount, 0);
+      const balance = totalIncome - totalExpense;
+
+      // Cập nhật transactionStats
+      setTransactionStats({ income: totalIncome, expense: totalExpense, balance });
+
+      // Cập nhật dashboardData
       setDashboardData((prev) => ({
         ...prev,
-        stats: { ...prev.stats, expense: totalExpense, income: totalIncome },
+        stats: { ...prev.stats, expense: totalExpense, income: totalIncome, balance },
       }));
+    }
+  }, [fetchData]);
+
+  const fetchCategories = useCallback(async () => {
+    const data = await fetchData('/api/categories', 'Không thể tải danh sách danh mục');
+    if (data) {
+      setCategories(data);
     }
   }, [fetchData]);
 
@@ -223,9 +302,24 @@ const Dashboard = () => {
       fetchSavings(),
       fetchInvestments(),
       fetchTransactions(),
+      fetchCategories(),
       fetchNotifications(),
     ]).finally(() => setLoading(false));
-  }, [fetchDashboardData, fetchUserBalance, fetchSavings, fetchInvestments, fetchTransactions, fetchNotifications]);
+  }, [
+    fetchDashboardData,
+    fetchUserBalance,
+    fetchSavings,
+    fetchInvestments,
+    fetchTransactions,
+    fetchCategories,
+    fetchNotifications,
+  ]);
+
+  // Hàm ánh xạ ID danh mục sang tên
+  const getCategoryName = (categoryId: string) => {
+    const category = categories.find((cat) => cat._id === categoryId);
+    return category ? category.name : 'Không xác định';
+  };
 
   // Dữ liệu biểu đồ
   const financialData = [
@@ -250,22 +344,6 @@ const Dashboard = () => {
     return Object.entries(grouped).map(([name, value]) => ({ name, value }));
   };
 
-  const savingsData =
-    dashboardData.savingsProgress?.map((s) => ({
-      name: s.name,
-      value: s.current_amount,
-      target: s.target_amount,
-    })) || [];
-
-    
-  const investmentData =
-    dashboardData.investmentProgress?.map((i) => ({
-      name: i.name,
-      value: i.currentAmount,
-    })) || [];
-
-  const COLORS = ['#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4', '#FFEEAD'];
-
   // Định dạng tiền tệ
   const formatCurrency = (amount: number) =>
     new Intl.NumberFormat('vi-VN', { style: 'currency', currency: currency === 'VND' ? 'VND' : 'USD' }).format(amount);
@@ -280,438 +358,456 @@ const Dashboard = () => {
       'Tiện ích': <Home />,
       'Khác': <ShoppingCart />,
       'Lương': <AccountBalance />,
+      'Tiết kiệm': <Savings />,
     }[category] || <ShoppingCart />);
-
-  // Styles
-  const cardStyle = {
-    p: { xs: 1, sm: 2 },
-    bgcolor: darkMode ? 'rgba(30, 41, 59, 0.95)' : 'rgba(255, 255, 255, 0.98)',
-    borderRadius: '12px',
-    boxShadow: darkMode ? '0 5px 15px rgba(0,0,0,0.5)' : '0 5px 15px rgba(0,0,0,0.1)',
-    transition: 'transform 0.3s ease, box-shadow 0.3s ease',
-    '&:hover': { transform: 'scale(1.02)', boxShadow: darkMode ? '0 10px 20px rgba(0,0,0,0.7)' : '0 10px 20px rgba(0,0,0,0.15)' },
-    backdropFilter: 'blur(5px)',
-  };
-
-  const buttonStyle = {
-    bgcolor: 'linear-gradient(45deg, #3B82F6 30%, #7C3AED 90%)',
-    color: '#000',
-    borderRadius: '8px',
-    px: { xs: 1.5, sm: 2 },
-    py: 1,
-    fontWeight: 600,
-    textTransform: 'none',
-    boxShadow: '0 2px 10px rgba(59, 130, 246, 0.4)',
-    '&:hover': { bgcolor: 'linear-gradient(45deg, #2563EB 30%, #6D28D9 90%)', boxShadow: '0 4px 15px rgba(59, 130, 246, 0.6)' },
-  };
 
   return (
     <Box
       sx={{
-        p: { xs: 1, sm: 2, md: 3 },
+        p: { xs: 2, sm: 3, md: 4 },
         background: darkMode
           ? 'linear-gradient(135deg, #0F172A 0%, #1E293B 100%)'
-          : 'linear-gradient(135deg, #F1F5F9 0%, #E2E8F0 100%)',
-        fontFamily: "'Inter', sans-serif",
+          : 'linear-gradient(135deg, #F8FAFC 0%, #E2E8F0 100%)',
         minHeight: '100vh',
-        overflowY: 'auto',
-        overflowX: 'hidden',
         position: 'relative',
       }}
     >
+      {/* Background Gradient */}
       <Box
         sx={{
           position: 'absolute',
-          top: '-20%',
-          left: '-20%',
-          width: '140%',
-          height: '140%',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
           background: darkMode
-            ? 'radial-gradient(circle, rgba(124, 58, 237, 0.2) 0%, rgba(15, 23, 42, 0) 70%)'
-            : 'radial-gradient(circle, rgba(59, 130, 246, 0.2) 0%, rgba(241, 245, 249, 0) 70%)',
-          zIndex: 0,
-          transform: 'rotate(-20deg)',
+            ? 'radial-gradient(circle at top right, rgba(124, 58, 237, 0.15), transparent 50%)'
+            : 'radial-gradient(circle at top right, rgba(59, 130, 246, 0.15), transparent 50%)',
+          pointerEvents: 'none',
         }}
       />
 
-      <Typography
-        variant="h4"
-        sx={{
-          mb: { xs: 2, sm: 3, md: 4 },
-          color: darkMode ? '#E2E8F0' : '#1E293B',
-          fontWeight: 700,
-          textAlign: 'center',
-          zIndex: 1,
-          background: 'linear-gradient(45deg, #3B82F6, #7C3AED)',
-          WebkitBackgroundClip: 'text',
-          WebkitTextFillColor: 'transparent',
-          fontSize: { xs: '1.5rem', sm: '2rem', md: '2.5rem' },
-        }}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5 }}
       >
-        Bảng Điều Khiển Tài Chính
-      </Typography>
+        <Typography
+          variant="h4"
+          sx={{
+            mb: { xs: 3, sm: 4 },
+            textAlign: 'center',
+            fontWeight: 800,
+            background: 'linear-gradient(45deg, #3B82F6, #7C3AED)',
+            WebkitBackgroundClip: 'text',
+            WebkitTextFillColor: 'transparent',
+            fontSize: { xs: '1.75rem', sm: '2.25rem', md: '2.75rem' },
+            letterSpacing: '-0.02em',
+          }}
+        >
+          Tổng Quan Tài Chính
+        </Typography>
 
-      {error && (
-        <Alert severity="error" sx={{ mb: 2, borderRadius: '8px', bgcolor: darkMode ? 'rgba(239, 68, 68, 0.2)' : '#FEE2E2', zIndex: 1 }}>
-          {error}
-        </Alert>
-      )}
+        {error && (
+          <Alert 
+            severity="error" 
+            sx={{ 
+              mb: 3, 
+              borderRadius: '12px',
+              backdropFilter: 'blur(10px)',
+              background: darkMode ? 'rgba(239, 68, 68, 0.2)' : 'rgba(254, 226, 226, 0.9)',
+            }}
+          >
+            {error}
+          </Alert>
+        )}
 
-      <Grid container spacing={{ xs: 1, sm: 2, md: 3 }} sx={{ zIndex: 1 }}>
-        {/* Tổng quan tài chính */}
-        <Grid item xs={12}>
-          <Paper sx={cardStyle}>
-            <Typography
-              variant="h6"
-              sx={{ mb: 2, color: darkMode ? '#A5B4FC' : '#4B5563', fontWeight: 600, fontSize: { xs: '1rem', sm: '1.25rem' } }}
-            >
-              Tổng Quan
-            </Typography>
-            <Grid container spacing={{ xs: 1, sm: 2 }}>
-              {[
-                { label: 'Thu nhập', value: dashboardData.stats.income, icon: < ArrowUpward sx={{ color: '#22C55E', fontSize: { xs: 20, sm: 24 } }} /> },
-                { label: 'Chi tiêu', value: dashboardData.stats.expense, icon: <ArrowDownward sx={{ color: '#EF4444', fontSize: { xs: 20, sm: 24 } }} /> },
-                { label: 'Tiết kiệm', value: dashboardData.stats.savings, icon: <Savings sx={{ color: '#3B82F6', fontSize: { xs: 20, sm: 24 } }} /> },
-                { label: 'Đầu tư', value: dashboardData.stats.investment, icon: <AccountBalance sx={{ color: '#F59E0B', fontSize: { xs: 20, sm: 24 } }} /> },
-                { label: 'Số dư', value: dashboardData.stats.balance, icon: <AccountBalance sx={{ color: '#8B5CF6', fontSize: { xs: 20, sm: 24 } }} /> },
-              ].map((item, index) => (
-                <Grid item xs={6} sm={3} key={index}>
-                  <motion.div
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: index * 0.2, duration: 0.5 }}
-                  >
-                    <Box display="flex" alignItems="center" mb={1}>
-                      {item.icon}
-                      <Typography
-                        sx={{ ml: 1, color: darkMode ? '#CBD5E1' : '#64748B', fontSize: { xs: '0.8rem', sm: '1rem' }, fontWeight: 500 }}
+        <Grid container spacing={3}>
+          {/* Thống kê chính */}
+          <Grid item xs={12}>
+            <Card sx={cardStyle}>
+              <CardContent>
+                <Typography
+                  variant="h6"
+                  sx={{
+                    mb: 3,
+                    fontWeight: 700,
+                    color: darkMode ? '#E2E8F0' : '#1E293B',
+                    fontSize: { xs: '1.1rem', sm: '1.3rem' },
+                  }}
+                >
+                  Số Liệu Tổng Quan
+                </Typography>
+                <Grid container spacing={3}>
+                  {[
+                    {
+                      label: 'Thu Nhập',
+                      value: transactionStats.income,
+                      icon: <ArrowUpward sx={{ color: '#22C55E', fontSize: 28 }} />,
+                      trend: '+12%',
+                      color: '#22C55E'
+                    },
+                    {
+                      label: 'Chi Tiêu',
+                      value: transactionStats.expense,
+                      icon: <ArrowDownward sx={{ color: '#EF4444', fontSize: 28 }} />,
+                      trend: '-8%',
+                      color: '#EF4444'
+                    },
+                    {
+                      label: 'Tiết Kiệm',
+                      value: dashboardData.stats.savings,
+                      icon: <Savings sx={{ color: '#3B82F6', fontSize: 28 }} />,
+                      trend: '+5%',
+                      color: '#3B82F6'
+                    },
+                    {
+                      label: 'Đầu Tư',
+                      value: dashboardData.stats.investment,
+                      icon: <TrendingUp sx={{ color: '#F59E0B', fontSize: 28 }} />,
+                      trend: '+15%',
+                      color: '#F59E0B'
+                    },
+                    {
+                      label: 'Số Dư',
+                      value: transactionStats.balance,
+                      icon: <AccountBalance sx={{ color: '#8B5CF6', fontSize: 28 }} />,
+                      trend: '+10%',
+                      color: '#8B5CF6'
+                    },
+                  ].map((item, index) => (
+                    <Grid item xs={12} sm={6} md={4} lg={2.4} key={index}>
+                      <motion.div
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: index * 0.1 }}
                       >
-                        {item.label}
-                      </Typography>
-                    </Box>
-                    {loading ? (
-                      <Skeleton width={100} height={30} />
-                    ) : (
-                      <Typography
-                        sx={{ fontSize: { xs: '1rem', sm: '1.25rem' }, fontWeight: 600, color: darkMode ? '#E2E8F0' : '#1E293B' }}
-                      >
-                        {formatCurrency(item.value)}
-                      </Typography>
-                    )}
-                  </motion.div>
-                </Grid>
-              ))}
-            </Grid>
-          </Paper>
-        </Grid>
-
-        {/* Biểu đồ phân bổ tài chính */}
-        <Grid item xs={12} md={6}>
-          <Paper sx={cardStyle}>
-            <Typography
-              variant="h6"
-              sx={{ mb: 2, color: darkMode ? '#A5B4FC' : '#4B5563', fontWeight: 600, fontSize: { xs: '1rem', sm: '1.25rem' } }}
-            >
-              Phân Bổ Tài Chính
-            </Typography>
-            {loading ? (
-              <Skeleton variant="circular" width="100%" height={200} sx={{ mx: 'auto' }} />
-            ) : (
-              <ResponsiveContainer width="100%" height={250}>
-                <PieChart>
-                  <Pie
-                    data={financialData}
-                    cx="50%"
-                    cy="50%"
-                    outerRadius={90}
-                    dataKey="value"
-                    label={({ name, percent }) => `${name} (${(percent * 100).toFixed(0)}%)`}
-                    labelLine
-                  >
-                    {financialData.map((_, index) => (
-                      <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                    ))}
-                  </Pie>
-                  <RechartsTooltip
-                    formatter={(value: number) => formatCurrency(value)}
-                    contentStyle={{ background: darkMode ? '#1E293B' : '#fff', borderRadius: '8px', border: 'none' }}
-                  />
-                </PieChart>
-              </ResponsiveContainer>
-            )}
-          </Paper>
-        </Grid>
-
-        {/* Biểu đồ xu hướng chi tiêu */}
-        <Grid item xs={12} md={6}>
-          <Paper sx={cardStyle}>
-            <Box display="flex" justifyContent="space-between" alignItems="center" mb={2} flexDirection={{ xs: 'column', sm: 'row' }}>
-              <Typography
-                variant="h6"
-                sx={{ color: darkMode ? '#A5B4FC' : '#4B5563', fontWeight: 600, fontSize: { xs: '1rem', sm: '1.25rem' }, mb: { xs: 1, sm: 0 } }}
-              >
-                Xu Hướng Chi Tiêu
-              </Typography>
-              <Tabs
-                value={timeFilter}
-                onChange={(_, newValue) => setTimeFilter(newValue)}
-                sx={{ '& .MuiTab-root': { color: darkMode ? '#CBD5E1' : '#64748B', fontWeight: 500, fontSize: { xs: '0.8rem', sm: '0.9rem' } } }}
-              >
-                <Tab label="Ngày" value="day" />
-                <Tab label="Tuần" value="week" />
-                <Tab label="Tháng" value="month" />
-              </Tabs>
-            </Box>
-            {loading ? (
-              <Skeleton variant="rectangular" height={200} />
-            ) : (
-              <ResponsiveContainer width="100%" height={250}>
-                <LineChart data={trendData()} margin={{ top: 5, right: 20, left: 40, bottom: 5 }}>
-                  <CartesianGrid strokeDasharray="3 3" stroke={darkMode ? '#4B5563' : '#E5E7EB'} />
-                  <XAxis dataKey="name" stroke={darkMode ? '#CBD5E1' : '#64748B'} fontSize={12} />
-                  <YAxis
-                    stroke={darkMode ? '#CBD5E1' : '#64748B'}
-                    tickFormatter={(value) => formatCurrency(value)}
-                    fontSize={12}
-                    width={60}
-                  />
-                  <RechartsTooltip
-                    formatter={(value: number) => formatCurrency(value)}
-                    contentStyle={{ background: darkMode ? '#1E293B' : '#fff', borderRadius: '8px', border: 'none' }}
-                  />
-                  <Line type="monotone" dataKey="value" stroke="#FF6B6B" strokeWidth={2} dot={{ r: 4 }} activeDot={{ r: 6 }} />
-                </LineChart>
-              </ResponsiveContainer>
-            )}
-          </Paper>
-        </Grid>
-
-        {/* Giao dịch gần đây */}
-        <Grid item xs={12}>
-          <Paper sx={cardStyle}>
-            <Box display="flex" justifyContent="space-between" alignItems="center" mb={2} flexDirection={{ xs: 'column', sm: 'row' }}>
-              <Typography
-                variant="h6"
-                sx={{ color: darkMode ? '#A5B4FC' : '#4B5563', fontWeight: 600, fontSize: { xs: '1rem', sm: '1.25rem' }, mb: { xs: 1, sm: 0 } }}
-              >
-                Giao Dịch Gần Đây
-              </Typography>
-              <Button
-                sx={buttonStyle}
-                onClick={() => {
-                  const recentTransactions = transactions.slice(0, 10);
-                  navigate('/dashboard/transactions', { state: { transactions: recentTransactions } });
-                }}
-              >
-                Xem Tất Cả
-              </Button>
-            </Box>
-            <TableContainer>
-              <Table stickyHeader>
-                <TableHead>
-                  <TableRow>
-                    <TableCell
-                      sx={{ color: darkMode ? '#A5B4FC' : '#4B5563', fontWeight: 600, fontSize: { xs: '0.8rem', sm: '0.9rem' } }}
-                    >
-                      📅 Ngày
-                    </TableCell>
-                    <TableCell
-                      sx={{ color: darkMode ? '#A5B4FC' : '#4B5563', fontWeight: 600, fontSize: { xs: '0.8rem', sm: '0.9rem' } }}
-                    >
-                      📊 Loại
-                    </TableCell>
-                    <TableCell
-                      sx={{ color: darkMode ? '#A5B4FC' : '#4B5563', fontWeight: 600, fontSize: { xs: '0.8rem', sm: '0.9rem' } }}
-                    >
-                      📁 Danh mục
-                    </TableCell>
-                    <TableCell
-                      sx={{ color: darkMode ? '#A5B4FC' : '#4B5563', fontWeight: 600, fontSize: { xs: '0.8rem', sm: '0.9rem' } }}
-                    >
-                      📝 Mô tả
-                    </TableCell>
-                    <TableCell
-                      sx={{ color: darkMode ? '#A5B4FC' : '#4B5563', fontWeight: 600, fontSize: { xs: '0.8rem', sm: '0.9rem' } }}
-                    >
-                      💰 Số tiền
-                    </TableCell>
-                  </TableRow>
-                </TableHead>
-                <TableBody>
-                  {loading ? (
-                    Array(5)
-                      .fill(0)
-                      .map((_, i) => (
-                        <TableRow key={i}>
-                          <TableCell colSpan={5}>
-                            <Skeleton />
-                          </TableCell>
-                        </TableRow>
-                      ))
-                  ) : (
-                    transactions.slice(0, 5).map((t) => (
-                      <TableRow
-                        key={t._id}
-                        component={motion.tr}
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        transition={{ duration: 0.3 }}
-                      >
-                        <TableCell
-                          sx={{ color: darkMode ? '#E2E8F0' : '#1E293B', fontSize: { xs: '0.75rem', sm: '0.85rem' } }}
-                        >
-                          {new Date(t.date).toLocaleDateString('vi-VN')}
-                        </TableCell>
-                        <TableCell
-                          sx={{ color: darkMode ? '#E2E8F0' : '#1E293B', fontSize: { xs: '0.75rem', sm: '0.85rem' } }}
-                        >
-                          {t.type === 'income' ? 'Thu nhập' : 'Chi tiêu'}
-                        </TableCell>
-                        <TableCell
-                          sx={{ color: darkMode ? '#E2E8F0' : '#1E293B', fontSize: { xs: '0.75rem', sm: '0.85rem' } }}
-                        >
-                          {t.category}
-                        </TableCell>
-                        <TableCell
-                          sx={{ color: darkMode ? '#E2E8F0' : '#1E293B', fontSize: { xs: '0.75rem', sm: '0.85rem' } }}
-                        >
-                          <Box display="flex" alignItems="center">
-                            {getCategoryIcon(t.category)} {t.description}
-                          </Box>
-                        </TableCell>
-                        <TableCell
+                        <Card
                           sx={{
-                            color: t.type === 'income' ? '#22C55E' : '#EF4444',
-                            fontWeight: 600,
-                            fontSize: { xs: '0.75rem', sm: '0.85rem' },
+                            ...statCardStyle,
+                            background: darkMode
+                              ? `linear-gradient(135deg, ${item.color}15 0%, ${item.color}05 100%)`
+                              : `linear-gradient(135deg, ${item.color}10 0%, ${item.color}05 100%)`,
                           }}
                         >
-                          {formatCurrency(t.amount)}
-                        </TableCell>
+                          <Box sx={{ mb: 2 }}>
+                            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
+                              {item.icon}
+                              <Typography
+                                sx={{
+                                  color: item.color,
+                                  fontSize: '0.875rem',
+                                  fontWeight: 600,
+                                }}
+                              >
+                                {item.trend}
+                              </Typography>
+                            </Box>
+                            <Typography
+                              sx={{
+                                color: darkMode ? '#E2E8F0' : '#1E293B',
+                                fontSize: { xs: '1.25rem', sm: '1.5rem' },
+                                fontWeight: 700,
+                                mb: 0.5,
+                              }}
+                            >
+                              {loading ? <Skeleton width={100} /> : formatCurrency(item.value)}
+                            </Typography>
+                            <Typography
+                              sx={{
+                                color: darkMode ? '#94A3B8' : '#64748B',
+                                fontSize: '0.875rem',
+                                fontWeight: 500,
+                              }}
+                            >
+                              {item.label}
+                            </Typography>
+                          </Box>
+                        </Card>
+                      </motion.div>
+                    </Grid>
+                  ))}
+                </Grid>
+              </CardContent>
+            </Card>
+          </Grid>
+
+          {/* Biểu đồ */}
+          <Grid item xs={12} md={6}>
+            <Card sx={cardStyle}>
+              <CardContent>
+                <Typography
+                  variant="h6"
+                  sx={{
+                    mb: 3,
+                    fontWeight: 700,
+                    color: darkMode ? '#E2E8F0' : '#1E293B',
+                    fontSize: { xs: '1.1rem', sm: '1.3rem' },
+                  }}
+                >
+                  Phân Bổ Chi Tiêu
+                </Typography>
+                {loading ? (
+                  <Skeleton variant="circular" width="100%" height={300} />
+                ) : (
+                  <ResponsiveContainer width="100%" height={300}>
+                    <PieChart>
+                      <Pie
+                        data={financialData}
+                        cx="50%"
+                        cy="50%"
+                        innerRadius={60}
+                        outerRadius={100}
+                        dataKey="value"
+                        label={({ name, percent }) => `${name} (${(percent * 100).toFixed(0)}%)`}
+                      >
+                        {financialData.map((entry, index) => (
+                          <Cell 
+                            key={`cell-${index}`} 
+                            fill={[
+                              '#3B82F6',
+                              '#F59E0B',
+                              '#10B981',
+                              '#8B5CF6',
+                              '#EC4899'
+                            ][index % 5]} 
+                          />
+                        ))}
+                      </Pie>
+                      <RechartsTooltip
+                        formatter={(value: number) => formatCurrency(value)}
+                        contentStyle={{
+                          background: darkMode ? '#1E293B' : '#FFFFFF',
+                          border: 'none',
+                          borderRadius: '8px',
+                          boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)',
+                        }}
+                      />
+                    </PieChart>
+                  </ResponsiveContainer>
+                )}
+              </CardContent>
+            </Card>
+          </Grid>
+
+          {/* Biểu đồ xu hướng */}
+          <Grid item xs={12} md={6}>
+            <Card sx={cardStyle}>
+              <CardContent>
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+                  <Typography
+                    variant="h6"
+                    sx={{
+                      fontWeight: 700,
+                      color: darkMode ? '#E2E8F0' : '#1E293B',
+                      fontSize: { xs: '1.1rem', sm: '1.3rem' },
+                    }}
+                  >
+                    Xu Hướng Chi Tiêu
+                  </Typography>
+                  <Tabs
+                    value={timeFilter}
+                    onChange={(_, newValue) => setTimeFilter(newValue)}
+                    sx={{
+                      '& .MuiTab-root': {
+                        minWidth: 'auto',
+                        px: 2,
+                        color: darkMode ? '#94A3B8' : '#64748B',
+                        '&.Mui-selected': {
+                          color: darkMode ? '#3B82F6' : '#2563EB',
+                        },
+                      },
+                    }}
+                  >
+                    <Tab label="Ngày" value="day" />
+                    <Tab label="Tuần" value="week" />
+                    <Tab label="Tháng" value="month" />
+                  </Tabs>
+                </Box>
+                {loading ? (
+                  <Skeleton variant="rectangular" height={300} />
+                ) : (
+                  <ResponsiveContainer width="100%" height={300}>
+                    <LineChart data={trendData()} margin={{ top: 5, right: 20, left: 20, bottom: 5 }}>
+                      <CartesianGrid strokeDasharray="3 3" stroke={darkMode ? '#334155' : '#E2E8F0'} />
+                      <XAxis
+                        dataKey="name"
+                        stroke={darkMode ? '#94A3B8' : '#64748B'}
+                        fontSize={12}
+                        tickLine={false}
+                      />
+                      <YAxis
+                        stroke={darkMode ? '#94A3B8' : '#64748B'}
+                        fontSize={12}
+                        tickFormatter={(value) => formatCurrency(value)}
+                        tickLine={false}
+                      />
+                      <RechartsTooltip
+                        formatter={(value: number) => formatCurrency(value)}
+                        contentStyle={{
+                          background: darkMode ? '#1E293B' : '#FFFFFF',
+                          border: 'none',
+                          borderRadius: '8px',
+                          boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)',
+                        }}
+                      />
+                      <Line
+                        type="monotone"
+                        dataKey="value"
+                        stroke="#3B82F6"
+                        strokeWidth={3}
+                        dot={{ fill: '#3B82F6', r: 4 }}
+                        activeDot={{ r: 6, fill: '#2563EB' }}
+                      />
+                    </LineChart>
+                  </ResponsiveContainer>
+                )}
+              </CardContent>
+            </Card>
+          </Grid>
+
+          {/* Giao dịch gần đây */}
+          <Grid item xs={12}>
+            <Card sx={cardStyle}>
+              <CardContent>
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+                  <Typography
+                    variant="h6"
+                    sx={{
+                      fontWeight: 700,
+                      color: darkMode ? '#E2E8F0' : '#1E293B',
+                      fontSize: { xs: '1.1rem', sm: '1.3rem' },
+                    }}
+                  >
+                    Giao Dịch Gần Đây
+                  </Typography>
+                  <Button
+                    variant="contained"
+                    sx={buttonStyle}
+                    onClick={() => navigate('/dashboard/transactions')}
+                  >
+                    Xem Tất Cả
+                  </Button>
+                </Box>
+                <TableContainer>
+                  <Table>
+                    <TableHead>
+                      <TableRow>
+                        <TableCell sx={{ color: darkMode ? '#94A3B8' : '#64748B', fontWeight: 600 }}>Ngày</TableCell>
+                        <TableCell sx={{ color: darkMode ? '#94A3B8' : '#64748B', fontWeight: 600 }}>Loại</TableCell>
+                        <TableCell sx={{ color: darkMode ? '#94A3B8' : '#64748B', fontWeight: 600 }}>Danh Mục</TableCell>
+                        <TableCell sx={{ color: darkMode ? '#94A3B8' : '#64748B', fontWeight: 600 }}>Mô Tả</TableCell>
+                        <TableCell sx={{ color: darkMode ? '#94A3B8' : '#64748B', fontWeight: 600 }}>Số Tiền</TableCell>
                       </TableRow>
-                    ))
-                  )}
-                </TableBody>
-              </Table>
-            </TableContainer>
-          </Paper>
+                    </TableHead>
+                    <TableBody>
+                      {loading
+                        ? Array(5).fill(0).map((_, i) => (
+                            <TableRow key={i}>
+                              <TableCell colSpan={5}><Skeleton /></TableCell>
+                            </TableRow>
+                          ))
+                        : transactions.slice(0, 5).map((t) => (
+                            <TableRow
+                              key={t._id}
+                              sx={{
+                                '&:hover': {
+                                  backgroundColor: darkMode ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.02)',
+                                },
+                              }}
+                            >
+                              <TableCell sx={{ color: darkMode ? '#E2E8F0' : '#1E293B' }}>
+                                {new Date(t.date).toLocaleDateString('vi-VN')}
+                              </TableCell>
+                              <TableCell>
+                                <Typography
+                                  sx={{
+                                    color: t.type === 'income' ? '#22C55E' : '#EF4444',
+                                    fontWeight: 600,
+                                  }}
+                                >
+                                  {t.type === 'income' ? 'Thu nhập' : 'Chi tiêu'}
+                                </Typography>
+                              </TableCell>
+                              <TableCell sx={{ color: darkMode ? '#E2E8F0' : '#1E293B' }}>
+                                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                                  {getCategoryIcon(getCategoryName(t.category))}
+                                  <Typography>{getCategoryName(t.category)}</Typography>
+                                </Box>
+                              </TableCell>
+                              <TableCell sx={{ color: darkMode ? '#E2E8F0' : '#1E293B' }}>
+                                {t.description}
+                              </TableCell>
+                              <TableCell>
+                                <Typography
+                                  sx={{
+                                    color: t.type === 'income' ? '#22C55E' : '#EF4444',
+                                    fontWeight: 600,
+                                  }}
+                                >
+                                  {formatCurrency(t.amount)}
+                                </Typography>
+                              </TableCell>
+                            </TableRow>
+                          ))}
+                    </TableBody>
+                  </Table>
+                </TableContainer>
+              </CardContent>
+            </Card>
+          </Grid>
         </Grid>
-
-        {/* Tiết kiệm */}
-        <Grid item xs={12} sm={6}>
-          <Paper sx={cardStyle}>
-            <Typography
-              variant="h6"
-              sx={{ mb: 2, color: darkMode ? '#A5B4FC' : '#4B5563', fontWeight: 600, fontSize: { xs: '1rem', sm: '1.25rem' } }}
-            >
-              Tiết Kiệm
-            </Typography>
-            {loading ? (
-              <Skeleton variant="circular" width="100%" height={200} sx={{ mx: 'auto' }} />
-            ) : savingsData.length > 0 ? (
-              <ResponsiveContainer width="100%" height={250}>
-                <PieChart>
-                  <Pie
-                    data={savingsData}
-                    cx="50%"
-                    cy="50%"
-                    outerRadius={90}
-                    dataKey="value"
-                    label={({ name, percent }) => `${name} (${(percent * 100).toFixed(0)}%)`}
-                    labelLine
-                  >
-                    {savingsData.map((_, index) => (
-                      <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                    ))}
-                  </Pie>
-                  <RechartsTooltip
-                    formatter={(value: number) => formatCurrency(value)}
-                    contentStyle={{ background: darkMode ? '#1E293B' : '#fff', borderRadius: '8px', border: 'none' }}
-                  />
-                </PieChart>
-              </ResponsiveContainer>
-            ) : (
-              <Typography sx={{ textAlign: 'center', color: darkMode ? '#CBD5E1' : '#64748B' }}>Chưa có dữ liệu tiết kiệm</Typography>
-            )}
-          </Paper>
-        </Grid>
-
-        {/* Đầu tư */}
-        <Grid item xs={12} sm={6}>
-          <Paper sx={cardStyle}>
-            <Typography
-              variant="h6"
-              sx={{ mb: 2, color: darkMode ? '#A5B4FC' : '#4B5563', fontWeight: 600, fontSize: { xs: '1rem', sm: '1.25rem' } }}
-            >
-              Đầu Tư
-            </Typography>
-            {loading ? (
-              <Skeleton variant="circular" width="100%" height={200} sx={{ mx: 'auto' }} />
-            ) : investmentData.length > 0 ? (
-              <ResponsiveContainer width="100%" height={250}>
-                <PieChart>
-                  <Pie
-                    data={investmentData}
-                    cx="50%"
-                    cy="50%"
-                    outerRadius={90}
-                    dataKey="value"
-                    label={({ name, percent }) => `${name} (${(percent * 100).toFixed(0)}%)`}
-                    labelLine
-                  >
-                    {investmentData.map((_, index) => (
-                      <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                    ))}
-                  </Pie>
-                  <RechartsTooltip
-                    formatter={(value: number) => formatCurrency(value)}
-                    contentStyle={{ background: darkMode ? '#1E293B' : '#fff', borderRadius: '8px', border: 'none' }}
-                  />
-                </PieChart>
-              </ResponsiveContainer>
-            ) : (
-              <Typography sx={{ textAlign: 'center', color: darkMode ? '#CBD5E1' : '#64748B' }}>Chưa có dữ liệu đầu tư</Typography>
-            )}
-          </Paper>
-        </Grid>
-      </Grid>
+      </motion.div>
 
       {/* Modal thông báo */}
       {showNotification && (
-        <Modal open={showNotification} onClose={() => closeNotification(notifications[0]?._id || '', false)}>
+        <Modal
+          open={showNotification}
+          onClose={() => closeNotification(notifications[0]?._id || '', false)}
+        >
           <Box
             sx={{
               position: 'absolute',
               top: '50%',
               left: '50%',
               transform: 'translate(-50%, -50%)',
-              width: { xs: '80%', sm: 350 },
-              bgcolor: darkMode ? '#1E293B' : '#fff',
-              p: { xs: 1, sm: 2 },
-              borderRadius: '12px',
-              boxShadow: '0 5px 20px rgba(0,0,0,0.3)',
-              backdropFilter: 'blur(5px)',
+              width: { xs: '90%', sm: 400 },
+              ...cardStyle,
+              p: 3,
             }}
           >
             <Typography
               variant="h6"
-              sx={{ color: darkMode ? '#A5B4FC' : '#4B5563', fontWeight: 600, fontSize: { xs: '0.9rem', sm: '1rem' } }}
+              sx={{
+                color: darkMode ? '#E2E8F0' : '#1E293B',
+                fontWeight: 700,
+                mb: 2,
+              }}
             >
               {notifications[0]?.title}
             </Typography>
             <Typography
-              sx={{ mt: 1, color: darkMode ? '#E2E8F0' : '#1E293B', fontSize: { xs: '0.8rem', sm: '0.9rem' } }}
+              sx={{
+                color: darkMode ? '#94A3B8' : '#64748B',
+                mb: 3,
+              }}
             >
               {notifications[0]?.content}
             </Typography>
-            <Box sx={{ mt: 2, display: 'flex', justifyContent: 'flex-end', gap: 1 }}>
+            <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 2 }}>
               <Button
                 onClick={() => closeNotification(notifications[0]?._id || '', true)}
-                sx={{ color: darkMode ? '#A5B4FC' : '#3B82F6', fontSize: { xs: '0.75rem', sm: '0.85rem' } }}
+                sx={{
+                  color: darkMode ? '#94A3B8' : '#64748B',
+                  '&:hover': {
+                    color: darkMode ? '#E2E8F0' : '#1E293B',
+                  },
+                }}
               >
                 Ẩn 1 giờ
               </Button>
               <Button
+                variant="contained"
                 onClick={() => closeNotification(notifications[0]?._id || '', false)}
                 sx={buttonStyle}
               >
@@ -721,6 +817,7 @@ const Dashboard = () => {
           </Box>
         </Modal>
       )}
+
       <ChatBot />
     </Box>
   );

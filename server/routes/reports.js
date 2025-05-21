@@ -1,5 +1,5 @@
 import { Box, Button, FormControl, Grid, InputLabel, MenuItem, Paper, Select, Typography } from '@mui/material';
-import { ArcElement, BarElement, CategoryScale, Chart as ChartJS, Legend, LinearScale, Tooltip } from 'chart.js';
+import { ArcElement, BarElement, CategoryScale, Chart as ChartJS, Legend, Tooltip } from 'chart.js';
 import jsPDF from 'jspdf';
 import React, { useEffect, useState } from 'react';
 import { Bar, Pie } from 'react-chartjs-2';

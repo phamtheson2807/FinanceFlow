@@ -205,8 +205,8 @@ const Register = () => {
           }}
         >
           <img
-            src="https://app.taobillgia.com/public/src/vtd/img/svg/log-in-girl.svg"
-            alt="Log In Girl"
+            src="https://cedgroup.vn/img/log-in-girl.svg"
+            alt="Finance App Register"
             style={{
               width: '100%',
               maxWidth: '600px', // Giữ nguyên maxWidth

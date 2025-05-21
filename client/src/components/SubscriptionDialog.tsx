@@ -4,40 +4,46 @@ import {
   DialogActions,
   DialogContent,
   DialogTitle,
+  Box,
+  Typography,
+  TextField,
+  MenuItem,
+  CircularProgress,
+  Radio,
+  RadioGroup,
+  FormControlLabel,
+  FormLabel,
+  FormControl,
 } from '@mui/material';
 import {
-  CardCvcElement,
-  CardExpiryElement,
-  CardNumberElement,
+  CardElement,
   Elements,
   useElements,
   useStripe,
 } from '@stripe/react-stripe-js';
-import { loadStripe } from '@stripe/stripe-js'; // ✅ Dùng chuẩn từ Stripe
+import { loadStripe } from '@stripe/stripe-js';
 import axios from 'axios';
 import { useState } from 'react';
 import { useDispatch } from 'react-redux';
 import { AppDispatch } from '../redux/store';
 import { fetchSubscription } from '../redux/subscriptionSlice';
+import { EmailOutlined, CreditCard, Person, Public } from '@mui/icons-material';
 
 const stripePromise = loadStripe(process.env.REACT_APP_STRIPE_PUBLISHABLE_KEY!);
-
 
 interface SubscriptionDialogProps {
   open: boolean;
   onClose: () => void;
-  plan: 'premium' | 'pro';
+  plan: 'pro';
 }
 
-interface PriceConfig {
-  monthly: number;
-  yearly: number;
-}
-
-interface Prices {
-  premium: PriceConfig;
-  pro: PriceConfig;
-}
+const countries = [
+  { code: 'VN', label: 'Việt Nam' },
+  { code: 'US', label: 'Hoa Kỳ' },
+  { code: 'JP', label: 'Nhật Bản' },
+  { code: 'KR', label: 'Hàn Quốc' },
+  // ... thêm quốc gia nếu cần
+];
 
 const SubscriptionDialog: React.FC<SubscriptionDialogProps> = ({ open, onClose, plan }) => {
   const stripe = useStripe();
@@ -45,24 +51,9 @@ const SubscriptionDialog: React.FC<SubscriptionDialogProps> = ({ open, onClose, 
   const dispatch = useDispatch<AppDispatch>();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [billingCycle, setBillingCycle] = useState<'monthly' | 'yearly'>('monthly');
-  const [billingDetails, setBillingDetails] = useState({
-    fullName: '',
-    country: 'Vietnam',
-    address: '',
-    postalCode: '',
-  });
-
-  const prices: Prices = {
-    premium: { monthly: 10, yearly: 100 },
-    pro: { monthly: 20, yearly: 200 },
-  };
-
-  const currentPrice = prices[plan][billingCycle];
-
-  const handleBillingChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setBillingDetails({ ...billingDetails, [e.target.name]: e.target.value });
-  };
+  const [email, setEmail] = useState('');
+  const [fullName, setFullName] = useState('');
+  const [country, setCountry] = useState('VN');
 
   const handleUpgrade = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -75,11 +66,8 @@ const SubscriptionDialog: React.FC<SubscriptionDialogProps> = ({ open, onClose, 
       return;
     }
 
-    const cardNumberElement = elements.getElement(CardNumberElement);
-    const cardExpiryElement = elements.getElement(CardExpiryElement);
-    const cardCvcElement = elements.getElement(CardCvcElement);
-
-    if (!cardNumberElement || !cardExpiryElement || !cardCvcElement) {
+    const cardElement = elements.getElement(CardElement);
+    if (!cardElement) {
       setError('Vui lòng nhập đầy đủ thông tin thẻ.');
       setLoading(false);
       return;
@@ -88,14 +76,11 @@ const SubscriptionDialog: React.FC<SubscriptionDialogProps> = ({ open, onClose, 
     try {
       const { paymentMethod, error: paymentError } = await stripe.createPaymentMethod({
         type: 'card',
-        card: cardNumberElement,
+        card: cardElement,
         billing_details: {
-          name: billingDetails.fullName,
-          address: {
-            country: billingDetails.country,
-            line1: billingDetails.address,
-            postal_code: billingDetails.postalCode,
-          },
+          name: fullName,
+          email,
+          address: { country },
         },
       });
 
@@ -112,42 +97,107 @@ const SubscriptionDialog: React.FC<SubscriptionDialogProps> = ({ open, onClose, 
         { headers: { Authorization: `Bearer ${token}` } }
       );
 
-      alert('Nâng cấp thành công!');
       dispatch(fetchSubscription());
       onClose();
+      alert('Nâng cấp thành công!');
     } catch (err: any) {
       setError(err.response?.data?.message || 'Có lỗi xảy ra khi nâng cấp.');
-      console.error('❌ Lỗi nâng cấp:', err.response || err);
     }
 
     setLoading(false);
   };
 
-  const elementOptions = {
+  const cardElementOptions = {
     style: {
       base: {
         fontSize: '16px',
         color: '#424770',
         '::placeholder': { color: '#aab7c4' },
+        fontFamily: 'inherit',
       },
       invalid: { color: '#9e2146' },
     },
+    hidePostalCode: true,
   };
 
   return (
-    <Dialog open={open} onClose={onClose} sx={{ '& .MuiPaper-root': { borderRadius: '16px', maxWidth: '800px' } }}>
-      <DialogTitle sx={{ fontWeight: 'bold', color: '#1976d2' }}>
-        Nâng cấp lên {plan}
+    <Dialog open={open} onClose={onClose} sx={{ '& .MuiPaper-root': { borderRadius: '18px', maxWidth: 420, width: '100%' } }}>
+      <DialogTitle sx={{ fontWeight: 'bold', color: '#1976d2', textAlign: 'center', pb: 0 }}>
+        Thanh toán nâng cấp Pro
       </DialogTitle>
-      <DialogContent>
-        {/* Body giữ nguyên, có thể render biểu mẫu thẻ và thông tin người dùng tại đây */}
-      </DialogContent>
-      <DialogActions>
-        <Button onClick={onClose} sx={{ color: '#757575' }} disabled={loading}>
-          Hủy
-        </Button>
-      </DialogActions>
-      <form id="payment-form" onSubmit={handleUpgrade} style={{ display: 'none' }} />
+      <form onSubmit={handleUpgrade} autoComplete="off">
+        <DialogContent sx={{ pt: 1 }}>
+          <Box sx={{ display: 'flex', alignItems: 'flex-end', mb: 2 }}>
+            <EmailOutlined sx={{ color: '#1976d2', mr: 1 }} />
+            <TextField
+              label="Email"
+              value={email}
+              onChange={e => setEmail(e.target.value)}
+              fullWidth
+              required
+              type="email"
+              autoComplete="email"
+              variant="standard"
+            />
+          </Box>
+          <Typography sx={{ fontWeight: 600, mb: 1, mt: 2 }}>Phương thức thanh toán</Typography>
+          <Box sx={{ p: 2, border: '1.5px solid #e0e0e0', borderRadius: 2, mb: 2, background: '#fafbfc' }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
+              <CreditCard sx={{ color: '#1976d2', mr: 1 }} />
+              <Typography variant="subtitle2" sx={{ fontWeight: 500 }}>Thông tin thẻ</Typography>
+            </Box>
+            <CardElement options={cardElementOptions} />
+          </Box>
+          <Box sx={{ display: 'flex', alignItems: 'flex-end', mb: 2 }}>
+            <Person sx={{ color: '#1976d2', mr: 1 }} />
+            <TextField
+              label="Tên chủ thẻ"
+              value={fullName}
+              onChange={e => setFullName(e.target.value)}
+              fullWidth
+              required
+              autoComplete="cc-name"
+              variant="standard"
+            />
+          </Box>
+          <Box sx={{ display: 'flex', alignItems: 'flex-end', mb: 1 }}>
+            <Public sx={{ color: '#1976d2', mr: 1 }} />
+            <TextField
+              select
+              label="Quốc gia hoặc khu vực"
+              value={country}
+              onChange={e => setCountry(e.target.value)}
+              fullWidth
+              required
+              variant="standard"
+            >
+              {countries.map((option) => (
+                <MenuItem key={option.code} value={option.code}>
+                  {option.label}
+                </MenuItem>
+              ))}
+            </TextField>
+          </Box>
+          {error && (
+            <Typography color="error" sx={{ mt: 2, mb: 1, textAlign: 'center' }}>
+              {error}
+            </Typography>
+          )}
+        </DialogContent>
+        <DialogActions sx={{ px: 3, pb: 2 }}>
+          <Button onClick={onClose} sx={{ color: '#757575' }} disabled={loading}>
+            Hủy
+          </Button>
+          <Button
+            type="submit"
+            variant="contained"
+            sx={{ minWidth: 120, fontWeight: 600 }}
+            disabled={loading}
+          >
+            {loading ? <CircularProgress size={22} /> : 'Thanh toán'}
+          </Button>
+        </DialogActions>
+      </form>
     </Dialog>
   );
 };

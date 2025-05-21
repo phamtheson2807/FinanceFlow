@@ -35,7 +35,7 @@ const Landing = () => {
     <Box
       sx={{
         minHeight: '100vh',
-        background: '#0A0A23',
+        background: 'linear-gradient(135deg, #0F1729 0%, #1E1E4B 100%)',
         color: '#1E293B',
         overflow: 'hidden',
         position: 'relative',

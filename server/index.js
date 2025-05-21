@@ -98,6 +98,7 @@ const settingsRoutes = require('./routes/settings');
 const supportRoutes = require('./routes/support');
 const subscriptionRoutes = require('./routes/subscription');
 const budgetRoutes = require('./routes/budget');
+const reportRoutes = require('./routes/reportRoutes');
 
 app.use('/api/budgets', budgetRoutes);
 app.use('/uploads', express.static('uploads'));
@@ -113,6 +114,7 @@ app.use('/api/investments', investmentsRouter);
 app.use('/api/savings', savingsRoutes);
 app.use('/api', notificationsRoutes);
 app.use('/api/support', supportRoutes);
+app.use('/api/reports', reportRoutes);
 
 // Socket.IO logic (giữ nguyên)
 io.use((socket, next) => {

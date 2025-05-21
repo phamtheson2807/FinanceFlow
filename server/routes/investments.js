@@ -5,8 +5,8 @@ const checkSubscription = require('../middleware/checkSubscription');
 const Investment = require('../models/Investment');
 const axios = require('axios');
 
-// Lấy danh sách đầu tư
-router.get('/', authMiddleware, checkSubscription, async (req, res) => {
+// Lấy danh sách đầu tư - Cho phép tất cả các gói
+router.get('/', authMiddleware, checkSubscription(['free', 'premium', 'pro'], 'Tính năng đầu tư'), async (req, res) => {
   console.log('👤 User data sau khi qua middleware:', req.user);
   try {
     const userId = req.user._id; // ✅ Sửa thành _id
@@ -41,8 +41,8 @@ router.get('/', authMiddleware, checkSubscription, async (req, res) => {
   }
 });
 
-// Tạo mới đầu tư
-router.post('/', authMiddleware, checkSubscription, async (req, res) => {
+// Tạo mới đầu tư - Cho phép tất cả các gói
+router.post('/', authMiddleware, checkSubscription(['free', 'premium', 'pro'], 'Tính năng đầu tư'), async (req, res) => {
   try {
     const userId = req.user._id; // ✅ Sửa thành _id
     const {
@@ -86,8 +86,8 @@ router.post('/', authMiddleware, checkSubscription, async (req, res) => {
   }
 });
 
-// Cập nhật đầu tư
-router.put('/:id', authMiddleware, checkSubscription, async (req, res) => {
+// Cập nhật đầu tư - Cho phép tất cả các gói
+router.put('/:id', authMiddleware, checkSubscription(['free', 'premium', 'pro'], 'Tính năng đầu tư'), async (req, res) => {
   try {
     const userId = req.user._id; // ✅ Sửa thành _id
     const investment = await Investment.findById(req.params.id);
@@ -131,8 +131,8 @@ router.put('/:id', authMiddleware, checkSubscription, async (req, res) => {
   }
 });
 
-// Xoá đầu tư
-router.delete('/:id', authMiddleware, checkSubscription, async (req, res) => {
+// Xoá đầu tư - Cho phép tất cả các gói
+router.delete('/:id', authMiddleware, checkSubscription(['free', 'premium', 'pro'], 'Tính năng đầu tư'), async (req, res) => {
   try {
     const userId = req.user._id; // ✅ Sửa thành _id
     const investment = await Investment.findById(req.params.id);

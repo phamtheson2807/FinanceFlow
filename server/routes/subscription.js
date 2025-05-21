@@ -42,8 +42,9 @@ router.post('/upgrade', authMiddleware, async (req, res) => {
   const { plan, paymentMethodId } = req.body;
   console.log('📡 Nhận yêu cầu upgrade:', { plan, paymentMethodId });
 
-  if (!['premium', 'pro'].includes(plan)) {
-    return res.status(400).json({ message: 'Gói không hợp lệ. Chọn "premium" hoặc "pro"' });
+  // Chỉ cho phép nâng cấp lên gói "pro"
+  if (plan !== 'pro') {
+    return res.status(400).json({ message: 'Gói không hợp lệ. Chỉ hỗ trợ nâng cấp lên "pro"' });
   }
 
   if (!paymentMethodId) {
@@ -84,7 +85,8 @@ router.post('/upgrade', authMiddleware, async (req, res) => {
     await stripe.paymentMethods.attach(paymentMethodId, { customer: customer.id });
     console.log('✅ Đã gắn payment method:', paymentMethodId);
 
-    const priceId = plan === 'premium' ? 'price_1R6SK8J0EYLbnLTihMqG8Vno' : 'price_1R6SKtJ0EYLbnLTicD7AMwRk';
+    // Sử dụng priceId của gói "pro" duy nhất
+    const priceId = 'price_1R6SKtJ0EYLbnLTicD7AMwRk';
     console.log('📦 Price ID:', priceId);
 
     // Tạo subscription trên Stripe
@@ -175,6 +177,26 @@ router.post('/cancel', authMiddleware, async (req, res) => {
   } catch (error) {
     console.error('❌ Lỗi khi hủy subscription:', error.message, error.stack);
     res.status(500).json({ message: 'Lỗi máy chủ khi hủy subscription: ' + error.message });
+  }
+});
+
+// Tạo PaymentIntent cho thanh toán một lần (nếu dùng Stripe Elements)
+router.post('/create-payment-intent', authMiddleware, async (req, res) => {
+  const { plan } = req.body;
+  let amount = 0;
+  // Chỉ cho phép gói "pro"
+  if (plan === 'pro') amount = 1000 * 20; // $20
+  else return res.status(400).json({ message: 'Gói không hợp lệ. Chỉ hỗ trợ thanh toán cho gói "pro"' });
+
+  try {
+    const paymentIntent = await stripe.paymentIntents.create({
+      amount,
+      currency: 'usd',
+      metadata: { userId: req.user.id, plan },
+    });
+    res.status(200).json({ clientSecret: paymentIntent.client_secret });
+  } catch (error) {
+    res.status(500).json({ message: 'Lỗi tạo PaymentIntent', error: error.message });
   }
 });
 

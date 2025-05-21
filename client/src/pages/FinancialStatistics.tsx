@@ -6,13 +6,17 @@ import {
     Typography
 } from '@mui/material';
 import axios from 'axios';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 
 const FinancialStatistics = () => {
     const [statistics, setStatistics] = useState({ income: 0, expense: 0 });
-    const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
+    const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' as 'success' | 'error' });
 
-    const fetchStatistics = async () => {
+    const showSnackbar = useCallback((message: string, severity: 'success' | 'error') => {
+        setSnackbar({ open: true, message, severity });
+    }, []);
+
+    const fetchStatistics = useCallback(async () => {
         try {
             const token = localStorage.getItem('token');
             const response = await axios.get('http://localhost:5000/api/statistics', {
@@ -23,15 +27,11 @@ const FinancialStatistics = () => {
             console.error('Error fetching statistics:', error);
             showSnackbar('Không thể tải thống kê', 'error');
         }
-    };
+    }, [showSnackbar]);
 
     useEffect(() => {
         fetchStatistics();
-    }, []);
-
-    const showSnackbar = (message: string, severity: 'success' | 'error') => {
-        setSnackbar({ open: true, message, severity });
-    };
+    }, [fetchStatistics]);
 
     return (
         <Box sx={{ p: 3 }}>

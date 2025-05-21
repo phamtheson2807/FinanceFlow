@@ -1,35 +1,35 @@
-import { useState, useEffect } from 'react';
-import axios from 'axios';
+import { useState, useEffect, useCallback } from 'react';
+import axiosInstance from '../utils/axiosInstance';
 
-interface Category {
-    _id: string;
-    name: string;
-    type: 'income' | 'expense';
-    description?: string;
-    icon?: string;
+export interface Category {
+  _id: string;
+  name: string;
+  type: string;
+  description?: string;
+  icon?: string;
 }
 
 export const useCategories = () => {
-    const [categories, setCategories] = useState<Category[]>([]);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState<string | null>(null);
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string | null>(null);
 
-    useEffect(() => {
-        const fetchCategories = async () => {
-            try {
-                setLoading(true);
-                const response = await axios.get('/api/categories');
-                setCategories(response.data);
-            } catch (err) {
-                setError('Không thể tải danh sách danh mục');
-                console.error('Error fetching categories:', err);
-            } finally {
-                setLoading(false);
-            }
-        };
+  const fetchCategories = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const res = await axiosInstance.get('/api/categories');
+      setCategories(res.data);
+    } catch (err: any) {
+      setError('Không thể tải danh mục');
+    } finally {
+      setLoading(false);
+    }
+  }, []);
 
-        fetchCategories();
-    }, []);
+  useEffect(() => {
+    fetchCategories();
+  }, [fetchCategories]);
 
-    return { categories, loading, error };
+  return { categories, loading, error, refetch: fetchCategories };
 };
