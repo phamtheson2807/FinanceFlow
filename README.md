@@ -105,14 +105,49 @@ npm run dev
 
 ---
 
-### 📂 Cấu trúc thư mục
+## 📸 Giao diện Ứng dụng
 
-```bash
-FinanceFlow/
-├── client/       # Frontend React + TypeScript
-├── server/       # Backend Node.js + Express
-└── README.md     # Tài liệu hướng dẫn
-```
+### 🔐 Giao diện Đăng nhập & Đăng ký
+
+| Đăng nhập | Đăng ký |
+|-----------|---------|
+| ![Đăng nhập](./images/login.png) | ![Đăng ký](./images/register.png) |
+
+---
+
+### 🏠 Trang Tổng Quan
+
+![Tổng quan](./images/dashboard-overview.png)
+
+---
+
+### 💸 Quản lý Giao dịch
+
+![Giao dịch](./images/transaction.png)
+
+---
+
+### 💰 Quản lý Quỹ Tiết Kiệm
+
+![Tiết kiệm](./images/saving.png)
+
+---
+
+### 📈 Quản lý Đầu Tư
+
+![Đầu tư](./images/investment.png)
+
+---
+
+### 📊 Báo Cáo Tài Chính
+
+![Báo cáo](./images/report.png)
+
+---
+
+### 🤖 AI Phân Tích & Tư vấn Tài chính
+
+![AI Phân tích](./images/ai-analysis.png)
 
 ---
 
@@ -120,8 +155,6 @@ FinanceFlow/
 
 > ⚠️ Dự án này được phát triển là một đồ án tốt nghiệp và **chỉ được sử dụng cho mục đích học tập, nghiên cứu**.  
 > ❌ Nghiêm cấm sử dụng cho mục đích thương mại khi chưa được sự cho phép của tác giả.
-
-
 
 © 2025 [Phạm Thế Sơn](https://github.com/phamtheson2807)  
 Dự án này được phát hành theo giấy phép [MIT License](LICENSE).
