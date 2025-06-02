@@ -25,11 +25,15 @@ router.get('/', authMiddleware, checkSubscription(['free', 'premium', 'pro'], 'T
       console.log('💰 Giá crypto từ CoinGecko:', prices);
 
       for (const inv of cryptoInvestments) {
-        const currentPrice = prices[inv.name.toLowerCase()]?.vnd;
-        if (currentPrice && inv.quantity) {
-          inv.currentAmount = currentPrice * inv.quantity;
-          await inv.save();
-          console.log(`✅ Cập nhật ${inv.name}: currentAmount = ${inv.currentAmount}`);
+        try {
+          const currentPrice = prices[inv.name.toLowerCase()]?.vnd;
+          if (currentPrice && inv.quantity) {
+            inv.currentAmount = currentPrice * inv.quantity;
+            await inv.save();
+            console.log(`✅ Cập nhật ${inv.name}: currentAmount = ${inv.currentAmount}`);
+          }
+        } catch (err) {
+          console.error(`❌ Lỗi khi cập nhật ${inv.name}:`, err);
         }
       }
     }
@@ -112,6 +116,10 @@ router.put('/:id', authMiddleware, checkSubscription(['free', 'premium', 'pro'],
     investment.notes = notes || investment.notes;
     investment.status = status || investment.status;
     investment.quantity = quantity !== undefined ? quantity : investment.quantity;
+
+    if (req.body.currentAmount !== undefined) {
+      investment.currentAmount = req.body.currentAmount;
+    }
 
     if (investment.type === 'crypto' && investment.quantity) {
       const priceResponse = await axios.get(

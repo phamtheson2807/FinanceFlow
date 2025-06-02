@@ -1,11 +1,8 @@
 import { CheckCircleOutline, EmojiEvents } from '@mui/icons-material';
 import { Box, Button, Card, CardContent, Chip, Grid, List, ListItem, ListItemIcon, Paper, styled, Typography } from '@mui/material';
-import { Elements } from '@stripe/react-stripe-js';
-import { loadStripe } from '@stripe/stripe-js';
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axiosInstance from '../utils/axiosInstance';
-import StripeCheckoutDialog from './StripeCheckoutDialog';
 
 const StyledCard = styled(Card)(({ theme }) => ({
   borderRadius: '24px',
@@ -81,14 +78,26 @@ const PriceBadge = styled(Paper)(({ theme }) => ({
   textAlign: 'center',
 }));
 
-const stripePromise = loadStripe(process.env.REACT_APP_STRIPE_PUBLISHABLE_KEY!);
+const proPlans = [
+  {
+    label: 'Pro tháng',
+    price: 5,
+    priceId: 'price_monthly_id', // Thay bằng priceId thực tế trên Stripe
+    description: 'Gia hạn hàng tháng, hủy bất cứ lúc nào',
+  },
+  {
+    label: 'Pro năm',
+    price: 50,
+    priceId: 'price_yearly_id', // Thay bằng priceId thực tế trên Stripe
+    description: 'Tiết kiệm 2 tháng, thanh toán 1 lần/năm',
+  },
+];
 
 const PricingPage = () => {
-  const [selectedPlan, setSelectedPlan] = useState<'pro' | ''>('');
   const [currentPlan, setCurrentPlan] = useState('free');
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
-  const [stripeDialogOpen, setStripeDialogOpen] = useState(false);
+  const [selectedPro, setSelectedPro] = useState(proPlans[0]);
 
   useEffect(() => {
     const fetchSubscription = async () => {
@@ -104,10 +113,8 @@ const PricingPage = () => {
     fetchSubscription();
   }, []);
 
-  const handleUpgrade = () => {
-    setSelectedPlan('pro');
-    setStripeDialogOpen(true);
-  };
+  // Đã xóa hàm handleUpgrade vì không sử dụng
+  // const handleUpgrade = async () => { ... }
 
   const plans = [
     {
@@ -295,19 +302,37 @@ const PricingPage = () => {
                           </FeatureItem>
                         ))}
                       </List>
+                      <Box sx={{ mb: 2 }}>
+                        {proPlans.map((pro) => (
+                          <Button
+                            key={pro.label}
+                            variant={selectedPro.label === pro.label ? 'contained' : 'outlined'}
+                            color="primary"
+                            sx={{ mr: 1, mb: 1, fontWeight: 600, borderRadius: 3 }}
+                            onClick={() => setSelectedPro(pro)}
+                          >
+                            {pro.label} (${pro.price}/{pro.label === 'Pro tháng' ? 'tháng' : 'năm'})
+                          </Button>
+                        ))}
+                      </Box>
                       <StyledButton
                         size="large"
                         fullWidth
                         disabled={plan.disabled}
-                        onClick={handleUpgrade}
-                        sx={{
-                          fontSize: '1.1rem',
-                          py: 2,
-                          mt: 2,
-                          boxShadow: '0 8px 30px rgba(25, 118, 210, 0.2)',
-                          fontWeight: 700,
-                          letterSpacing: 0.5,
+                        onClick={async () => {
+                          try {
+                            const token = localStorage.getItem('token');
+                            const { data } = await axiosInstance.post(
+                              '/api/subscription/create-checkout-session',
+                              { plan: 'pro', priceId: selectedPro.priceId },
+                              { headers: { Authorization: `Bearer ${token}` } }
+                            );
+                            window.location.href = data.url;
+                          } catch (err) {
+                            alert('Không thể kết nối Stripe!');
+                          }
                         }}
+                        sx={{ fontSize: '1.1rem', py: 2, mt: 2, boxShadow: '0 8px 30px rgba(25, 118, 210, 0.2)', fontWeight: 700, letterSpacing: 0.5 }}
                       >
                         {plan.buttonText}
                       </StyledButton>
@@ -431,17 +456,6 @@ const PricingPage = () => {
           </Button>
         </Box>
       </Box>
-
-      {selectedPlan && (
-        <Elements stripe={stripePromise}>
-          <StripeCheckoutDialog
-            open={stripeDialogOpen}
-            onClose={() => setStripeDialogOpen(false)}
-            plan={selectedPlan}
-            onSuccess={() => window.location.reload()}
-          />
-        </Elements>
-      )}
     </Box>
   );
 };

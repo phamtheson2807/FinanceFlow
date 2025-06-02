@@ -296,7 +296,18 @@ import axiosInstance from '../../utils/axiosInstance';
         { text: 'Ngân sách', path: '/dashboard/reports/budget' },
       ],
     },
-    { text: 'AI Phân tích', icon: <SmartToy />, path: '/dashboard/ai-advisor', description: 'Phân tích tài chính với trợ lý AI' },
+    {
+      text: 'AI Phân tích',
+      icon: <SmartToy />,
+      path: '/dashboard/ai-advisor',
+      description: 'Phân tích tài chính với trợ lý AI',
+      subItems: [
+        { text: 'Phân tích chi tiêu', path: '/dashboard/ai-advisor/spending-analysis' },
+        { text: 'Gợi ý tiết kiệm', path: '/dashboard/ai-advisor/savings-suggestions' },
+        { text: 'Tư vấn đầu tư', path: '/dashboard/ai-advisor/investment-advice' },
+        { text: 'Dự báo tài chính', path: '/dashboard/ai-advisor/financial-forecast' },
+      ],
+    },
   ];
   
   const Layout: React.FC = () => {
@@ -312,7 +323,8 @@ import axiosInstance from '../../utils/axiosInstance';
     const [drawerCollapsed, setDrawerCollapsed] = useState(false);
     const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
     const [notifications, setNotifications] = useState<Notification[]>([]);
-    const [loading, setLoading] = useState(true);
+    const [notificationLoading, setNotificationLoading] = useState(true);
+    // Xóa: const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [openSubMenu, setOpenSubMenu] = useState<string | null>(null);
     const [showSpotlight, setShowSpotlight] = useState(true);
@@ -342,7 +354,7 @@ import axiosInstance from '../../utils/axiosInstance';
         console.error('Lỗi tải thông báo:', err);
         setError('Không thể tải thông báo.');
       } finally {
-        setLoading(false);
+        setNotificationLoading(false);
       }
     };
   
@@ -663,24 +675,22 @@ import axiosInstance from '../../utils/axiosInstance';
         </StyledDrawer>
   
         <MainContent collapsed={!isMobile && drawerCollapsed}>
-          {loading && (
+          {/* Xóa phần loading chung này */}
+          {/* {loading && (
             <Box sx={{ display: 'flex', justifyContent: 'center', mt: 4 }}>
               <CircularProgress sx={{ color: '#2563eb' }} />
             </Box>
-          )}
-  
+          )} */}
           {error && (
             <Alert severity="error" sx={{ mb: 3, borderRadius: '12px', boxShadow: '0 4px 12px rgba(0,0,0,0.08)' }}>
               {error}
             </Alert>
           )}
-  
           {subError && (
             <Alert severity="error" sx={{ mb: 3, borderRadius: '12px', boxShadow: '0 4px 12px rgba(0,0,0,0.08)' }}>
               {subError}
             </Alert>
           )}
-  
           <Outlet />
         </MainContent>
       </Box>

@@ -1,5 +1,5 @@
-import { Dialog, DialogTitle, DialogContent, DialogActions, Button, CircularProgress, Typography } from '@mui/material';
-import { CardElement, useStripe, useElements } from '@stripe/react-stripe-js';
+import { Button, CircularProgress, Dialog, DialogActions, DialogContent, DialogTitle, Typography } from '@mui/material';
+import { CardElement, useElements, useStripe } from '@stripe/react-stripe-js';
 import { useState } from 'react';
 import axiosInstance from '../utils/axiosInstance';
 
@@ -21,31 +21,15 @@ const StripeCheckoutDialog = ({ open, onClose, plan, onSuccess }: StripeCheckout
     setError(null);
     setLoading(true);
 
-    if (!stripe || !elements) {
-      setError('Stripe chưa sẵn sàng.');
-      setLoading(false);
-      return;
-    }
-
     try {
-      // Gọi backend để tạo paymentIntent
-      const { data } = await axiosInstance.post('/api/stripe/create-payment-intent', { plan });
-      const clientSecret = data.clientSecret;
-
-      const result = await stripe.confirmCardPayment(clientSecret, {
-        payment_method: {
-          card: elements.getElement(CardElement)!,
-        },
-      });
-
-      if (result.error) {
-        setError(result.error.message || 'Thanh toán thất bại');
-      } else if (result.paymentIntent && result.paymentIntent.status === 'succeeded') {
-        // Gọi backend để cập nhật subscription
-        await axiosInstance.post('/api/subscription/activate', { plan });
-        onSuccess();
-        onClose();
-      }
+      // Gọi backend để tạo Stripe Checkout Session
+      const token = localStorage.getItem('token');
+      const { data } = await axiosInstance.post(
+        '/api/subscription/create-checkout-session',
+        { plan },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      window.location.href = data.url; // Redirect sang Stripe Checkout
     } catch (err: any) {
       setError(err?.response?.data?.message || 'Có lỗi xảy ra');
     } finally {

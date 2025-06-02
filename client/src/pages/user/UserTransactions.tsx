@@ -1,49 +1,49 @@
 import {
-    Add as AddIcon,
-    ArrowBack as BackIcon,
-    Category as CategoryIcon,
-    Download as DownloadIcon,
-    TrendingDown as ExpenseIcon,
-    TrendingUp as IncomeIcon,
-    AttachMoney as MoneyIcon,
-    Refresh as RefreshIcon
+  Add as AddIcon,
+  ArrowBack as BackIcon,
+  Category as CategoryIcon,
+  Download as DownloadIcon,
+  TrendingDown as ExpenseIcon,
+  TrendingUp as IncomeIcon,
+  AttachMoney as MoneyIcon,
+  Refresh as RefreshIcon
 } from '@mui/icons-material';
 import {
-    Alert,
-    Box,
-    Button,
-    Card,
-    CardContent,
-    Chip,
-    Dialog,
-    DialogActions,
-    DialogContent,
-    DialogTitle,
-    FormControl,
-    Grid,
-    IconButton,
-    InputLabel,
-    MenuItem,
-    Select,
-    Skeleton,
-    Table,
-    TableBody,
-    TableCell,
-    TableContainer,
-    TableHead,
-    TableRow,
-    TextField,
-    Typography,
+  Alert,
+  Box,
+  Button,
+  Card,
+  CardContent,
+  Chip,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
+  FormControl,
+  Grid,
+  IconButton,
+  InputLabel,
+  MenuItem,
+  Select,
+  Skeleton,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  TextField,
+  Typography,
 } from '@mui/material';
 import { styled } from '@mui/material/styles';
 import {
-    BarElement,
-    CategoryScale,
-    Chart as ChartJS,
-    Tooltip as ChartTooltip,
-    Legend,
-    LinearScale,
-    Title,
+  BarElement,
+  CategoryScale,
+  Chart as ChartJS,
+  Tooltip as ChartTooltip,
+  Legend,
+  LinearScale,
+  Title,
 } from 'chart.js';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
@@ -68,8 +68,6 @@ const StyledCard = styled(Card)(({ theme }) => ({
     boxShadow: '0 8px 20px rgba(0,0,0,0.15)',
   },
 }));
-
-const StatCard = styled(StyledCard)(() => ({}));
 
 const GlassContainer = styled(Box)(({ theme }) => ({
   borderRadius: '16px',
@@ -534,18 +532,6 @@ const UserTransactions = () => {
     doc.save('bao-cao-giao-dich.pdf');
   };
 
-  const generateMonthOptions = () => {
-    const options = [];
-    const currentDate = new Date();
-    for (let i = 0; i < 12; i++) {
-      const date = new Date(currentDate.getFullYear(), currentDate.getMonth() - i, 1);
-      const value = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
-      const label = date.toLocaleString('vi-VN', { month: 'long', year: 'numeric' });
-      options.push({ value, label });
-    }
-    return options;
-  };
-
   // Corrected getCategoryDisplay function to handle all possible types safely
   const getCategoryDisplay = (categoryData: string | { _id: string; name: string; icon?: string } | null | undefined): string => {
     if (!categoryData) {
@@ -566,24 +552,32 @@ const UserTransactions = () => {
 
   if (loading) {
     return (
-      <Box sx={{ p: 3 }}>
-        <Skeleton variant="text" width="50%" height={40} />
+      <Box sx={{ p: { xs: 1, sm: 3 } }}>
+        <Box sx={{ width: { xs: '80%', sm: '50%' } }}>
+          <Skeleton variant="text" width="100%" height={40} />
+        </Box>
         <Grid container spacing={2} sx={{ mt: 2 }}>
           {[...Array(3)].map((_, i) => (
             <Grid item xs={12} sm={4} key={i}>
-              <Skeleton variant="rectangular" height={100} />
+              <Skeleton variant="rectangular" width="100%" height={100} />
             </Grid>
           ))}
         </Grid>
-        <Skeleton variant="rectangular" height={300} sx={{ mt: 3 }} />
-        <Skeleton variant="rectangular" height={400} sx={{ mt: 3 }} />
+        <Box sx={{ display: { xs: 'block', sm: 'none' } }}>
+          <Skeleton variant="rectangular" width="100%" height={200} sx={{ mt: 3 }} />
+          <Skeleton variant="rectangular" width="100%" height={200} sx={{ mt: 3 }} />
+        </Box>
+        <Box sx={{ display: { xs: 'none', sm: 'block' } }}>
+          <Skeleton variant="rectangular" width="100%" height={300} sx={{ mt: 3 }} />
+          <Skeleton variant="rectangular" width="100%" height={400} sx={{ mt: 3 }} />
+        </Box>
       </Box>
     );
   }
 
   return (
     <Box sx={{ 
-      p: { xs: 2, sm: 3 }, 
+      p: { xs: 1, sm: 3 }, 
       minHeight: '100vh',
       background: darkMode ? '#121212' : '#f8fafc',
     }}>
@@ -599,17 +593,18 @@ const UserTransactions = () => {
         <Typography 
           variant="h4" 
           sx={{ 
-            fontSize: { xs: '1.5rem', sm: '1.8rem', md: '2rem' },
+            fontSize: { xs: '1.2rem', sm: '1.5rem', md: '2rem' },
             fontWeight: 600,
             background: `linear-gradient(45deg, #2563eb, #3b82f6)`,
             WebkitBackgroundClip: 'text',
             WebkitTextFillColor: 'transparent',
             letterSpacing: '-0.02em',
+            textAlign: { xs: 'center', sm: 'left' },
           }}
         >
           Quản lý Giao dịch
         </Typography>
-        <Box sx={{ display: 'flex', gap: 1 }}>
+        <Box sx={{ display: 'flex', gap: 1, flexDirection: { xs: 'column', sm: 'row' }, width: { xs: '100%', sm: 'auto' } }}>
           <StyledButton
             variant="outlined"
             startIcon={<CategoryIcon />}
@@ -617,6 +612,7 @@ const UserTransactions = () => {
             sx={{
               borderColor: darkMode ? '#3b82f6' : '#2563eb',
               color: darkMode ? '#3b82f6' : '#2563eb',
+              width: { xs: '100%', sm: 'auto' },
             }}
           >
             Danh mục
@@ -628,6 +624,7 @@ const UserTransactions = () => {
             sx={{
               borderColor: darkMode ? '#3b82f6' : '#2563eb',
               color: darkMode ? '#3b82f6' : '#2563eb',
+              width: { xs: '100%', sm: 'auto' },
             }}
           >
             Quay lại
@@ -636,14 +633,14 @@ const UserTransactions = () => {
       </Box>
 
       {/* Alerts */}
-      {error && <Alert severity="error" sx={{ mb: 2, borderRadius: '12px' }}>{error}</Alert>}
-      {budgetAlert && <Alert severity="warning" sx={{ mb: 2, borderRadius: '12px', whiteSpace: 'pre-line' }}>{budgetAlert}</Alert>}
+      {error && <Alert severity="error" sx={{ mb: 2, borderRadius: '12px', fontSize: { xs: '0.9rem', sm: '1rem' } }}>{error}</Alert>}
+      {budgetAlert && <Alert severity="warning" sx={{ mb: 2, borderRadius: '12px', whiteSpace: 'pre-line', fontSize: { xs: '0.9rem', sm: '1rem' } }}>{budgetAlert}</Alert>}
 
       {/* Filters */}
-      <GlassContainer sx={{ mb: 3 }}>
+      <GlassContainer sx={{ mb: 3, p: { xs: 2, sm: 3 } }}>
         <Grid container spacing={2} alignItems="center">
           <Grid item xs={12} sm={3}>
-            <FormControl fullWidth>
+            <FormControl fullWidth size="small">
               <InputLabel>Lọc theo</InputLabel>
               <Select
                 value={filterType}
@@ -673,6 +670,7 @@ const UserTransactions = () => {
                   onChange={(e) => setStartDate(e.target.value)}
                   InputLabelProps={{ shrink: true }}
                   sx={{ '& .MuiOutlinedInput-root': { borderRadius: '12px' } }}
+                  size="small"
                 />
               </Grid>
               <Grid item xs={12} sm={3}>
@@ -684,6 +682,7 @@ const UserTransactions = () => {
                   onChange={(e) => setEndDate(e.target.value)}
                   InputLabelProps={{ shrink: true }}
                   sx={{ '& .MuiOutlinedInput-root': { borderRadius: '12px' } }}
+                  size="small"
                 />
               </Grid>
             </>
@@ -698,6 +697,7 @@ const UserTransactions = () => {
                 onChange={(e) => setSelectedMonth(e.target.value)}
                 InputLabelProps={{ shrink: true }}
                 sx={{ '& .MuiOutlinedInput-root': { borderRadius: '12px' } }}
+                size="small"
               />
             </Grid>
           )}
@@ -709,7 +709,8 @@ const UserTransactions = () => {
               sx={{
                 background: `linear-gradient(45deg, #2563eb, #3b82f6)`,
                 color: '#fff',
-                height: '56px',
+                height: { xs: '40px', sm: '56px' },
+                fontSize: { xs: '0.95rem', sm: '1rem' },
               }}
             >
               Lọc
@@ -724,10 +725,10 @@ const UserTransactions = () => {
           <StyledCard>
             <CardContent>
               <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
-                <IncomeIcon sx={{ color: '#4CAF50', mr: 1 }} />
-                <Typography variant="h6">Thu nhập</Typography>
+                <IncomeIcon sx={{ color: '#4CAF50', mr: 1, fontSize: { xs: 20, sm: 28 } }} />
+                <Typography variant="h6" sx={{ fontSize: { xs: '1rem', sm: '1.2rem' } }}>Thu nhập</Typography>
               </Box>
-              <Typography variant="h5" sx={{ color: '#4CAF50', fontWeight: 600 }}>
+              <Typography variant="h5" sx={{ color: '#4CAF50', fontWeight: 600, fontSize: { xs: '1.1rem', sm: '1.5rem' } }}>
                 {formatCurrency(stats.totalIncome)}
               </Typography>
             </CardContent>
@@ -737,10 +738,10 @@ const UserTransactions = () => {
           <StyledCard>
             <CardContent>
               <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
-                <ExpenseIcon sx={{ color: '#FF5722', mr: 1 }} />
-                <Typography variant="h6">Chi tiêu</Typography>
+                <ExpenseIcon sx={{ color: '#FF5722', mr: 1, fontSize: { xs: 20, sm: 28 } }} />
+                <Typography variant="h6" sx={{ fontSize: { xs: '1rem', sm: '1.2rem' } }}>Chi tiêu</Typography>
               </Box>
-              <Typography variant="h5" sx={{ color: '#FF5722', fontWeight: 600 }}>
+              <Typography variant="h5" sx={{ color: '#FF5722', fontWeight: 600, fontSize: { xs: '1.1rem', sm: '1.5rem' } }}>
                 {formatCurrency(stats.totalExpense)}
               </Typography>
             </CardContent>
@@ -750,14 +751,15 @@ const UserTransactions = () => {
           <StyledCard>
             <CardContent>
               <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
-                <MoneyIcon sx={{ color: stats.balance >= 0 ? '#2196F3' : '#F44336', mr: 1 }} />
-                <Typography variant="h6">Số dư</Typography>
+                <MoneyIcon sx={{ color: stats.balance >= 0 ? '#2196F3' : '#F44336', mr: 1, fontSize: { xs: 20, sm: 28 } }} />
+                <Typography variant="h6" sx={{ fontSize: { xs: '1rem', sm: '1.2rem' } }}>Số dư</Typography>
               </Box>
               <Typography 
                 variant="h5" 
                 sx={{ 
                   color: stats.balance >= 0 ? '#2196F3' : '#F44336',
-                  fontWeight: 600 
+                  fontWeight: 600,
+                  fontSize: { xs: '1.1rem', sm: '1.5rem' }
                 }}
               >
                 {formatCurrency(stats.balance)}
@@ -768,7 +770,7 @@ const UserTransactions = () => {
       </Grid>
 
       {/* Chart */}
-      <GlassContainer sx={{ mb: 3 }}>
+      <GlassContainer sx={{ mb: 3, p: { xs: 2, sm: 3 } }}>
         <Box sx={{ 
           display: 'flex', 
           justifyContent: 'space-between', 
@@ -777,19 +779,21 @@ const UserTransactions = () => {
           flexDirection: { xs: 'column', sm: 'row' },
           gap: 2
         }}>
-          <Typography variant="h6" sx={{ fontWeight: 600 }}>
+          <Typography variant="h6" sx={{ fontWeight: 600, fontSize: { xs: '1rem', sm: '1.2rem' } }}>
             Biểu đồ Thu - Chi
           </Typography>
-          <Box sx={{ display: 'flex', gap: 1 }}>
+          <Box sx={{ display: 'flex', gap: 1, flexDirection: { xs: 'column', sm: 'row' }, width: { xs: '100%', sm: 'auto' } }}>
             <StyledButton
               variant={groupBy === 'day' ? 'contained' : 'outlined'}
               onClick={() => setGroupBy('day')}
               sx={groupBy === 'day' ? {
                 background: `linear-gradient(45deg, #2563eb, #3b82f6)`,
                 color: '#fff',
+                width: { xs: '100%', sm: 'auto' },
               } : {
                 borderColor: darkMode ? '#3b82f6' : '#2563eb',
                 color: darkMode ? '#3b82f6' : '#2563eb',
+                width: { xs: '100%', sm: 'auto' },
               }}
             >
               Ngày
@@ -800,9 +804,11 @@ const UserTransactions = () => {
               sx={groupBy === 'week' ? {
                 background: `linear-gradient(45deg, #2563eb, #3b82f6)`,
                 color: '#fff',
+                width: { xs: '100%', sm: 'auto' },
               } : {
                 borderColor: darkMode ? '#3b82f6' : '#2563eb',
                 color: darkMode ? '#3b82f6' : '#2563eb',
+                width: { xs: '100%', sm: 'auto' },
               }}
             >
               Tuần
@@ -813,16 +819,18 @@ const UserTransactions = () => {
               sx={groupBy === 'month' ? {
                 background: `linear-gradient(45deg, #2563eb, #3b82f6)`,
                 color: '#fff',
+                width: { xs: '100%', sm: 'auto' },
               } : {
                 borderColor: darkMode ? '#3b82f6' : '#2563eb',
                 color: darkMode ? '#3b82f6' : '#2563eb',
+                width: { xs: '100%', sm: 'auto' },
               }}
             >
               Tháng
             </StyledButton>
           </Box>
         </Box>
-        <Box sx={{ height: 350 }}>
+        <Box sx={{ height: { xs: 200, sm: 350 }, width: '100%', overflowX: 'auto' }}>
           <Bar data={chartData()} options={chartOptions} />
         </Box>
       </GlassContainer>
@@ -836,10 +844,10 @@ const UserTransactions = () => {
         flexDirection: { xs: 'column', sm: 'row' },
         gap: 2
       }}>
-        <Typography variant="h6" sx={{ fontWeight: 600 }}>
+        <Typography variant="h6" sx={{ fontWeight: 600, fontSize: { xs: '1rem', sm: '1.2rem' } }}>
           Danh sách Giao dịch
         </Typography>
-        <Box sx={{ display: 'flex', gap: 1 }}>
+        <Box sx={{ display: 'flex', gap: 1, flexDirection: { xs: 'column', sm: 'row' }, width: { xs: '100%', sm: 'auto' } }}>
           <StyledButton
             variant="contained"
             startIcon={<AddIcon />}
@@ -847,6 +855,7 @@ const UserTransactions = () => {
             sx={{
               background: `linear-gradient(45deg, #2563eb, #3b82f6)`,
               color: '#fff',
+              width: { xs: '100%', sm: 'auto' },
             }}
           >
             Thêm Giao dịch
@@ -857,6 +866,7 @@ const UserTransactions = () => {
               borderRadius: '12px',
               border: `1px solid ${darkMode ? '#3b82f6' : '#2563eb'}`,
               color: darkMode ? '#3b82f6' : '#2563eb',
+              width: { xs: '100%', sm: 'auto' },
             }}
           >
             <RefreshIcon />
@@ -869,6 +879,7 @@ const UserTransactions = () => {
               sx={{
                 borderColor: darkMode ? '#3b82f6' : '#2563eb',
                 color: darkMode ? '#3b82f6' : '#2563eb',
+                width: { xs: '100%', sm: 'auto' },
               }}
             >
               Xuất PDF
@@ -877,88 +888,97 @@ const UserTransactions = () => {
         </Box>
       </Box>
 
-      <GlassContainer>
-        <TableContainer sx={{ maxHeight: 500 }}>
-          <Table stickyHeader>
-            <TableHead>
-              <TableRow>
-                <TableCell sx={{ 
-                  fontWeight: 600,
-                  background: darkMode ? '#1e2a38' : '#f8fafc',
-                }}>Ngày</TableCell>
-                <TableCell sx={{ 
-                  fontWeight: 600,
-                  background: darkMode ? '#1e2a38' : '#f8fafc',
-                }}>Loại</TableCell>
-                <TableCell sx={{ 
-                  fontWeight: 600,
-                  background: darkMode ? '#1e2a38' : '#f8fafc',
-                }}>Danh mục</TableCell>
-                <TableCell sx={{ 
-                  fontWeight: 600,
-                  background: darkMode ? '#1e2a38' : '#f8fafc',
-                }}>Mô tả</TableCell>
-                <TableCell sx={{ 
-                  fontWeight: 600,
-                  background: darkMode ? '#1e2a38' : '#f8fafc',
-                }}>Số tiền</TableCell>
-                <TableCell sx={{ 
-                  fontWeight: 600,
-                  background: darkMode ? '#1e2a38' : '#f8fafc',
-                }}>Phương thức</TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {filteredTransactions.length === 0 ? (
+      <GlassContainer sx={{ p: { xs: 1, sm: 3 } }}>
+        <Box sx={{ width: '100%', overflowX: 'auto' }}>
+          <TableContainer sx={{ maxHeight: { xs: 300, sm: 500 }, minWidth: 600 }}>
+            <Table stickyHeader size="small">
+              <TableHead>
                 <TableRow>
-                  <TableCell colSpan={6} align="center">
-                    <Typography sx={{ py: 3 }}>
-                      Không có giao dịch nào
-                    </Typography>
-                  </TableCell>
+                  <TableCell sx={{ 
+                    fontWeight: 600,
+                    background: darkMode ? '#1e2a38' : '#f8fafc',
+                    fontSize: { xs: '0.9rem', sm: '1rem' },
+                  }}>Ngày</TableCell>
+                  <TableCell sx={{ 
+                    fontWeight: 600,
+                    background: darkMode ? '#1e2a38' : '#f8fafc',
+                    fontSize: { xs: '0.9rem', sm: '1rem' },
+                  }}>Loại</TableCell>
+                  <TableCell sx={{ 
+                    fontWeight: 600,
+                    background: darkMode ? '#1e2a38' : '#f8fafc',
+                    fontSize: { xs: '0.9rem', sm: '1rem' },
+                  }}>Danh mục</TableCell>
+                  <TableCell sx={{ 
+                    fontWeight: 600,
+                    background: darkMode ? '#1e2a38' : '#f8fafc',
+                    fontSize: { xs: '0.9rem', sm: '1rem' },
+                  }}>Mô tả</TableCell>
+                  <TableCell sx={{ 
+                    fontWeight: 600,
+                    background: darkMode ? '#1e2a38' : '#f8fafc',
+                    fontSize: { xs: '0.9rem', sm: '1rem' },
+                  }}>Số tiền</TableCell>
+                  <TableCell sx={{ 
+                    fontWeight: 600,
+                    background: darkMode ? '#1e2a38' : '#f8fafc',
+                    fontSize: { xs: '0.9rem', sm: '1rem' },
+                  }}>Phương thức</TableCell>
                 </TableRow>
-              ) : (
-                filteredTransactions
-                  .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
-                  .map((transaction) => (
-                    <TableRow 
-                      key={transaction._id} 
-                      hover
-                      sx={{
-                        '&:hover': {
-                          backgroundColor: darkMode 
-                            ? 'rgba(255, 255, 255, 0.05)'
-                            : 'rgba(0, 0, 0, 0.02)',
-                        }
-                      }}
-                    >
-                      <TableCell>{new Date(transaction.date).toLocaleDateString('vi-VN')}</TableCell>
-                      <TableCell>
-                        <Chip
-                          icon={transaction.type === 'income' ? <IncomeIcon /> : <ExpenseIcon />}
-                          label={transaction.type === 'income' ? 'Thu nhập' : 'Chi tiêu'}
-                          color={transaction.type === 'income' ? 'success' : 'error'}
-                          size="small"
-                          sx={{ borderRadius: '8px' }}
-                        />
-                      </TableCell>
-                      <TableCell>
-                        {getCategoryDisplay(transaction.category)}
-                      </TableCell>
-                      <TableCell>{transaction.description}</TableCell>
-                      <TableCell sx={{ 
-                        color: transaction.type === 'income' ? '#4CAF50' : '#FF5722',
-                        fontWeight: 600 
-                      }}>
-                        {formatCurrency(transaction.amount)}
-                      </TableCell>
-                      <TableCell>{transaction.paymentMethod}</TableCell>
-                    </TableRow>
-                  ))
-              )}
-            </TableBody>
-          </Table>
-        </TableContainer>
+              </TableHead>
+              <TableBody>
+                {filteredTransactions.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={6} align="center">
+                      <Typography sx={{ py: 3, fontSize: { xs: '0.95rem', sm: '1rem' } }}>
+                        Không có giao dịch nào
+                      </Typography>
+                    </TableCell>
+                  </TableRow>
+                ) : (
+                  filteredTransactions
+                    .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+                    .map((transaction) => (
+                      <TableRow 
+                        key={transaction._id} 
+                        hover
+                        sx={{
+                          '&:hover': {
+                            backgroundColor: darkMode 
+                              ? 'rgba(255, 255, 255, 0.05)'
+                              : 'rgba(0, 0, 0, 0.02)',
+                          }
+                        }}
+                      >
+                        <TableCell sx={{ fontSize: { xs: '0.95rem', sm: '1rem' } }}>{new Date(transaction.date).toLocaleDateString('vi-VN')}</TableCell>
+                        <TableCell sx={{ fontSize: { xs: '0.95rem', sm: '1rem' } }}>
+                          <Chip
+                            icon={transaction.type === 'income' ? <IncomeIcon /> : <ExpenseIcon />}
+                            label={transaction.type === 'income' ? 'Thu nhập' : 'Chi tiêu'}
+                            color={transaction.type === 'income' ? 'success' : 'error'}
+                            size="small"
+                            sx={{ borderRadius: '8px' }}
+                          />
+                        </TableCell>
+                        <TableCell sx={{ fontSize: { xs: '0.95rem', sm: '1rem' } }}>
+                          {getCategoryDisplay(transaction.category)}
+                        </TableCell>
+                        <TableCell sx={{ fontSize: { xs: '0.95rem', sm: '1rem' } }}>{transaction.description}</TableCell>
+                        <TableCell sx={{ 
+                          color: transaction.type === 'income' ? '#4CAF50' : '#FF5722',
+                          fontWeight: 600,
+                          fontSize: { xs: '0.95rem', sm: '1rem' }
+                        }}>
+                          {formatCurrency(transaction.amount)}
+                        </TableCell>
+                        <TableCell sx={{ fontSize: { xs: '0.95rem', sm: '1rem' } }}>{transaction.paymentMethod}</TableCell>
+                      </TableRow>
+                    ))
+                )}
+              </TableBody>
+            </Table>
+          </TableContainer>
+        </Box>
       </GlassContainer>
 
       {/* Add Transaction Dialog */}
@@ -977,7 +997,7 @@ const UserTransactions = () => {
         }}
       >
         <DialogTitle sx={{ 
-          fontSize: '1.25rem',
+          fontSize: { xs: '1.1rem', sm: '1.25rem' },
           fontWeight: 600,
           color: darkMode ? '#fff' : '#1a202c',
         }}>
@@ -986,7 +1006,7 @@ const UserTransactions = () => {
         <DialogContent>
           <Grid container spacing={2} sx={{ mt: 1 }}>
             <Grid item xs={12}>
-              <FormControl fullWidth>
+              <FormControl fullWidth size="small">
                 <InputLabel>Loại giao dịch</InputLabel>
                 <Select
                   value={formData.type}
@@ -1006,10 +1026,11 @@ const UserTransactions = () => {
                 value={formData.amount}
                 onChange={(e) => setFormData({ ...formData, amount: e.target.value })}
                 sx={{ '& .MuiOutlinedInput-root': { borderRadius: '12px' } }}
+                size="small"
               />
             </Grid>
             <Grid item xs={12}>
-              <FormControl fullWidth>
+              <FormControl fullWidth size="small">
                 <InputLabel>Danh mục</InputLabel>
                 <Select
                   value={formData.category}
@@ -1033,6 +1054,7 @@ const UserTransactions = () => {
                 value={formData.description}
                 onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                 sx={{ '& .MuiOutlinedInput-root': { borderRadius: '12px' } }}
+                size="small"
               />
             </Grid>
             <Grid item xs={12}>
@@ -1044,10 +1066,11 @@ const UserTransactions = () => {
                 onChange={(e) => setFormData({ ...formData, date: e.target.value })}
                 InputLabelProps={{ shrink: true }}
                 sx={{ '& .MuiOutlinedInput-root': { borderRadius: '12px' } }}
+                size="small"
               />
             </Grid>
             <Grid item xs={12}>
-              <FormControl fullWidth>
+              <FormControl fullWidth size="small">
                 <InputLabel>Phương thức thanh toán</InputLabel>
                 <Select
                   value={formData.paymentMethod}
@@ -1067,6 +1090,7 @@ const UserTransactions = () => {
             onClick={() => setOpenDialog(false)}
             sx={{
               color: darkMode ? '#fff' : '#1a202c',
+              fontSize: { xs: '0.95rem', sm: '1rem' },
             }}
           >
             Hủy
@@ -1077,6 +1101,7 @@ const UserTransactions = () => {
             sx={{
               background: `linear-gradient(45deg, #2563eb, #3b82f6)`,
               color: '#fff',
+              fontSize: { xs: '0.95rem', sm: '1rem' },
             }}
           >
             Thêm

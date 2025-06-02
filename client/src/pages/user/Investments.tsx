@@ -1,31 +1,31 @@
 import {
-    AttachMoney,
-    CalendarToday,
-    Delete,
-    Description,
-    MonetizationOn,
+  AttachMoney,
+  CalendarToday,
+  Delete,
+  Description,
+  MonetizationOn,
 } from '@mui/icons-material';
 import {
-    Alert,
-    alpha,
-    Avatar,
-    Box,
-    Button,
-    CircularProgress,
-    Dialog,
-    DialogActions,
-    DialogContent,
-    DialogTitle,
-    Divider,
-    FormControl,
-    InputAdornment,
-    InputLabel,
-    OutlinedInput,
-    Snackbar,
-    styled,
-    TextField,
-    Typography,
-    useTheme
+  Alert,
+  alpha,
+  Avatar,
+  Box,
+  Button,
+  CircularProgress,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
+  Divider,
+  FormControl,
+  InputAdornment,
+  InputLabel,
+  OutlinedInput,
+  Snackbar,
+  styled,
+  TextField,
+  Typography,
+  useTheme
 } from '@mui/material';
 import { Theme, ThemeProvider } from '@mui/material/styles';
 import axios from 'axios';
@@ -393,7 +393,15 @@ const Investments = () => {
 
       // Step 1: Cập nhật thông tin khoản đầu tư
       const updatedInvestment = {
-        ...selectedInvestment,
+        name: selectedInvestment.name,
+        type: selectedInvestment.type,
+        initialAmount: selectedInvestment.initialAmount,
+        expectedReturn: selectedInvestment.expectedReturn,
+        startDate: selectedInvestment.startDate,
+        endDate: selectedInvestment.endDate,
+        notes: selectedInvestment.notes,
+        status: selectedInvestment.status,
+        quantity: selectedInvestment.quantity,
         currentAmount: currentAmount - withdrawalAmount,
         history: [
           ...selectedInvestment.history,

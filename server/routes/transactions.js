@@ -7,6 +7,8 @@ const User = require('../models/User');
 const { authMiddleware, isAdmin } = require('../middleware/auth');
 const mongoose = require('mongoose');
 const { checkLimit } = require('../middleware/checkLimit');
+const sendNotificationEmail = require('../utils/sendNotificationEmail');
+const Settings = require('../models/Settings');
 
 // Hàm tính balance từ transactions
 const calculateUserBalance = async (userId) => {
@@ -148,6 +150,29 @@ router.post('/', authMiddleware, checkLimit('transactions'), async (req, res) =>
     }
     user.balance = await calculateUserBalance(userId);
     await user.save();
+
+    // Gửi email nếu bật nhận thông báo
+    const settings = await Settings.findOne({ user_id: userId });
+    if (settings && settings.emailNotifications && user.email) {
+      const subject = 'Thông báo: Giao dịch mới trên FinanceFlow';
+      const htmlContent = `
+        <div style="font-family: 'Poppins', Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background-color: #f8fafc; border-radius: 10px;">
+          <h2 style="color: #1976d2;">Bạn vừa có giao dịch mới!</h2>
+          <p><b>Loại:</b> ${type === 'income' ? 'Thu nhập' : 'Chi tiêu'}</p>
+          <p><b>Số tiền:</b> ${amount.toLocaleString('vi-VN')} VND</p>
+          <p><b>Danh mục:</b> ${existingCategory.name}</p>
+          <p><b>Mô tả:</b> ${description || '(Không có)'}</p>
+          <p><b>Ngày:</b> ${new Date(date).toLocaleDateString('vi-VN')}</p>
+          <hr />
+          <p style="color: #64748B; font-size: 13px;">Nếu bạn không thực hiện giao dịch này, vui lòng kiểm tra lại tài khoản của mình.</p>
+        </div>
+      `;
+      try {
+        await sendNotificationEmail(user.email, subject, htmlContent);
+      } catch (err) {
+        console.error('❌ Lỗi gửi email thông báo giao dịch:', err.message);
+      }
+    }
 
     console.log('✅ Đã tạo giao dịch:', newTransaction._id);
     await User.findByIdAndUpdate(userId, { $inc: { transactionCount: 1 } });

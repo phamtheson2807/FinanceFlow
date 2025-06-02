@@ -1,22 +1,22 @@
 import {
-  Analytics,
-  Psychology,
-  Savings,
-  Send as SendIcon,
-  TrendingUp
+    Analytics,
+    Psychology,
+    Savings,
+    Send as SendIcon,
+    TrendingUp
 } from '@mui/icons-material';
 import {
-  Avatar,
-  Box,
-  Button,
-  Card,
-  CardContent,
-  CircularProgress,
-  Container,
-  Grid,
-  Paper,
-  TextField,
-  Typography
+    Avatar,
+    Box,
+    Button,
+    Card,
+    CardContent,
+    CircularProgress,
+    Container,
+    Grid,
+    Paper,
+    TextField,
+    Typography
 } from '@mui/material';
 import { motion } from 'framer-motion';
 import React, { useEffect, useState } from 'react';
@@ -231,8 +231,8 @@ const AIAdvisor: React.FC = () => {
               background: '#1C1C3D'
             }}
           >
-            <CardContent sx={{ flexGrow: 1, display: 'flex', flexDirection: 'column' }}>
-              <Box sx={{ flexGrow: 1, overflowY: 'auto', mb: 2 }}>
+            <CardContent sx={{ flexGrow: 1, display: 'flex', flexDirection: 'column', p: 2 }}>
+              <Box sx={{ flexGrow: 1, overflowY: 'auto', maxHeight: '420px', pr: 1 }}>
                 {messages.map((message, index) => (
                   <Box
                     key={index}
@@ -301,7 +301,7 @@ const AIAdvisor: React.FC = () => {
                 ))}
               </Box>
 
-              <Box sx={{ display: 'flex', gap: 1 }}>
+              <Box sx={{ display: 'flex', gap: 1, mt: 2 }}>
                 <TextField
                   fullWidth
                   placeholder="Nhập câu hỏi của bạn..."

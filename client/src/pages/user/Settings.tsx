@@ -1,9 +1,7 @@
 import {
   ExitToApp,
   Language,
-  Notifications as NotificationsIcon,
   Security,
-  SmartToy,
   Visibility
 } from '@mui/icons-material';
 import {
@@ -44,7 +42,6 @@ interface UserSettings {
   emailNotifications: boolean;
   showBalance: boolean;
   currency: string;
-  aiFinancialManagement: boolean;
   language: string;
 }
 
@@ -60,7 +57,6 @@ const Settings = () => {
     emailNotifications: true,
     showBalance: true,
     currency: 'VND',
-    aiFinancialManagement: false,
     language: 'vi'
   });
   const [snackbar, setSnackbar] = useState({
@@ -68,10 +64,8 @@ const Settings = () => {
     message: '',
     severity: 'success' as 'success' | 'error',
   });
-  const [loading, setLoading] = useState(false);
-  const [checkingAI, setCheckingAI] = useState(false);
-  const [showAIResultPopup, setShowAIResultPopup] = useState(false);
   const [confirmLogout, setConfirmLogout] = useState(false);
+  const [loading, setLoading] = useState(false);
 
   const fetchSettings = useCallback(async () => {
     setLoading(true);
@@ -132,15 +126,6 @@ const Settings = () => {
     }
   };
 
-  const handleCloseAIResultPopup = () => {
-    setShowAIResultPopup(false);
-  };
-
-  const handleViewAIReport = () => {
-    navigate('/dashboard/ai-report');
-    setShowAIResultPopup(false);
-  };
-
   const handleCloseSnackbar = () => {
     setSnackbar({ ...snackbar, open: false });
   };
@@ -149,25 +134,6 @@ const Settings = () => {
     logout();
     navigate('/login');
     setConfirmLogout(false);
-  };
-
-  const handleToggleAI = async (checked: boolean) => {
-    setCheckingAI(true);
-    try {
-      await handleSettingChange('aiFinancialManagement', checked);
-      
-      if (checked) {
-        // Giả lập thời gian tạo báo cáo AI
-        setTimeout(() => {
-          setCheckingAI(false);
-          setShowAIResultPopup(true);
-        }, 2000);
-      } else {
-        setCheckingAI(false);
-      }
-    } catch (error) {
-      setCheckingAI(false);
-    }
   };
 
   return (
@@ -193,74 +159,34 @@ const Settings = () => {
 
       <Grid container spacing={3}>
         <Grid item xs={12} md={6}>
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, delay: 0.1 }}
-          >
-            <Card elevation={3} sx={{ 
-              borderRadius: '16px', 
-              overflow: 'hidden',
-              boxShadow: '0 6px 20px rgba(0, 0, 0, 0.1)' 
-            }}>
+          <motion.div>
+            <Card elevation={3}>
               <CardContent>
-                <Typography 
-                  variant="h6" 
-                  gutterBottom 
-                  sx={{ 
-                    display: 'flex', 
-                    alignItems: 'center',
-                    fontWeight: 600,
-                    color: theme.palette.mode === 'dark' ? '#A78BFA' : 'primary.main'
-                  }}
-                >
-                  <Visibility sx={{ mr: 1 }} /> {t('settings.interface.title')}
+                <Typography variant="h6" sx={{ display: 'flex', alignItems: 'center', fontWeight: 600, color: theme.palette.mode === 'dark' ? '#A78BFA' : 'primary.main' }}>
+                  <Visibility sx={{ mr: 1 }} /> Giao diện & Ngôn ngữ
                 </Typography>
                 <Divider sx={{ my: 2 }} />
-                
                 <FormControl fullWidth sx={{ mb: 3 }}>
                   <FormControlLabel
-                    control={
-                      <Switch
-                        checked={darkMode}
-                        onChange={(e) => handleSettingChange('darkMode', e.target.checked)}
-                        color="primary"
-                      />
-                    }
-                    label={
-                      <Typography sx={{ fontWeight: 500 }}>
-                        {t('settings.interface.dark_mode')}
-                        <FormHelperText>{t('settings.interface.dark_mode_desc')}</FormHelperText>
-                      </Typography>
-                    }
+                    control={<Switch checked={darkMode} onChange={(e) => handleSettingChange('darkMode', e.target.checked)} color="primary" />}
+                    label={<Typography sx={{ fontWeight: 500 }}>Chế độ tối<FormHelperText>Chuyển đổi giữa giao diện sáng và tối.</FormHelperText></Typography>}
                   />
                 </FormControl>
-                
                 <FormControl fullWidth sx={{ mb: 3 }}>
-                  <InputLabel>{t('settings.interface.currency')}</InputLabel>
-                  <Select
-                    value={settings.currency}
-                    label={t('settings.interface.currency')}
-                    onChange={(e) => handleSettingChange('currency', e.target.value)}
-                  >
-                    <MenuItem value="VND">{t('common.currency.VND')}</MenuItem>
-                    <MenuItem value="USD">{t('common.currency.USD')}</MenuItem>
+                  <InputLabel>Tiền tệ</InputLabel>
+                  <Select value={settings.currency} label="Tiền tệ" onChange={(e) => handleSettingChange('currency', e.target.value)}>
+                    <MenuItem value="VND">VNĐ</MenuItem>
+                    <MenuItem value="USD">USD</MenuItem>
                   </Select>
-                  <FormHelperText>{t('settings.interface.currency_desc')}</FormHelperText>
+                  <FormHelperText>Chọn loại tiền tệ hiển thị trong ứng dụng.</FormHelperText>
                 </FormControl>
-                
                 <FormControl fullWidth>
-                  <InputLabel>{t('settings.interface.language')}</InputLabel>
-                  <Select
-                    value={settings.language}
-                    label={t('settings.interface.language')}
-                    onChange={(e) => handleSettingChange('language', e.target.value)}
-                    startAdornment={<Language sx={{ mr: 1, ml: -0.5 }} />}
-                  >
+                  <InputLabel>Ngôn ngữ</InputLabel>
+                  <Select value={settings.language} label="Ngôn ngữ" onChange={(e) => handleSettingChange('language', e.target.value)} startAdornment={<Language sx={{ mr: 1, ml: -0.5 }} />}>
                     <MenuItem value="vi">Tiếng Việt</MenuItem>
                     <MenuItem value="en">English</MenuItem>
                   </Select>
-                  <FormHelperText>{t('settings.interface.language_desc')}</FormHelperText>
+                  <FormHelperText>Chọn ngôn ngữ giao diện.</FormHelperText>
                 </FormControl>
               </CardContent>
             </Card>
@@ -268,88 +194,23 @@ const Settings = () => {
         </Grid>
 
         <Grid item xs={12} md={6}>
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, delay: 0.2 }}
-          >
-            <Card elevation={3} sx={{ 
-              borderRadius: '16px', 
-              overflow: 'hidden',
-              boxShadow: '0 6px 20px rgba(0, 0, 0, 0.1)' 
-            }}>
+          <motion.div>
+            <Card elevation={3}>
               <CardContent>
-                <Typography 
-                  variant="h6" 
-                  gutterBottom 
-                  sx={{ 
-                    display: 'flex', 
-                    alignItems: 'center',
-                    fontWeight: 600,
-                    color: theme.palette.mode === 'dark' ? '#A78BFA' : 'primary.main'
-                  }}
-                >
-                  <Security sx={{ mr: 1 }} /> {t('settings.security.title')}
+                <Typography variant="h6" sx={{ display: 'flex', alignItems: 'center', fontWeight: 600, color: theme.palette.mode === 'dark' ? '#A78BFA' : 'primary.main' }}>
+                  <Security sx={{ mr: 1 }} /> Bảo mật & Quyền riêng tư
                 </Typography>
                 <Divider sx={{ my: 2 }} />
-                
                 <FormControl fullWidth sx={{ mb: 3 }}>
                   <FormControlLabel
-                    control={
-                      <Switch
-                        checked={settings.showBalance}
-                        onChange={(e) => handleSettingChange('showBalance', e.target.checked)}
-                        color="primary"
-                      />
-                    }
-                    label={
-                      <Typography sx={{ fontWeight: 500 }}>
-                        {t('settings.security.show_balance')}
-                        <FormHelperText>{t('settings.security.show_balance_desc')}</FormHelperText>
-                      </Typography>
-                    }
+                    control={<Switch checked={settings.showBalance} onChange={(e) => handleSettingChange('showBalance', e.target.checked)} color="primary" />}
+                    label={<Typography sx={{ fontWeight: 500 }}>Ẩn/Hiện số dư<FormHelperText>Bật để hiển thị số dư tài khoản, tắt để ẩn số dư khỏi màn hình.</FormHelperText></Typography>}
                   />
                 </FormControl>
-                
-                <FormControl fullWidth sx={{ mb: 3 }}>
-                  <FormControlLabel
-                    control={
-                      <Switch
-                        checked={settings.emailNotifications}
-                        onChange={(e) => handleSettingChange('emailNotifications', e.target.checked)}
-                        color="primary"
-                      />
-                    }
-                    label={
-                      <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                        <NotificationsIcon sx={{ mr: 1, color: settings.emailNotifications ? 'warning.main' : 'text.disabled' }} />
-                        <Typography sx={{ fontWeight: 500 }}>
-                          {t('settings.security.email_notifications')}
-                          <FormHelperText>{t('settings.security.email_notifications_desc')}</FormHelperText>
-                        </Typography>
-                      </Box>
-                    }
-                  />
-                </FormControl>
-                
                 <FormControl fullWidth>
                   <FormControlLabel
-                    control={
-                      <Switch
-                        checked={settings.aiFinancialManagement}
-                        onChange={(e) => handleToggleAI(e.target.checked)}
-                        color="primary"
-                      />
-                    }
-                    label={
-                      <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                        <SmartToy sx={{ mr: 1, color: settings.aiFinancialManagement ? '#A78BFA' : 'text.disabled' }} />
-                        <Typography sx={{ fontWeight: 500 }}>
-                          {t('settings.security.ai_management')}
-                          <FormHelperText>{t('settings.security.ai_management_desc')}</FormHelperText>
-                        </Typography>
-                      </Box>
-                    }
+                    control={<Switch checked={settings.emailNotifications} onChange={(e) => handleSettingChange('emailNotifications', e.target.checked)} color="primary" />}
+                    label={<Typography sx={{ fontWeight: 500 }}>Nhận thông báo qua Email<FormHelperText>Bật để nhận thông báo về hoạt động tài khoản qua email.</FormHelperText></Typography>}
                   />
                 </FormControl>
               </CardContent>
@@ -358,47 +219,16 @@ const Settings = () => {
         </Grid>
 
         <Grid item xs={12}>
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, delay: 0.3 }}
-          >
-            <Card elevation={3} sx={{ 
-              borderRadius: '16px', 
-              overflow: 'hidden',
-              boxShadow: '0 6px 20px rgba(0, 0, 0, 0.1)',
-              borderLeft: '5px solid #ef4444'
-            }}>
+          <motion.div>
+            <Card elevation={3} sx={{ borderLeft: '5px solid #ef4444' }}>
               <CardContent>
-                <Typography 
-                  variant="h6" 
-                  gutterBottom 
-                  sx={{ 
-                    display: 'flex', 
-                    alignItems: 'center',
-                    fontWeight: 600,
-                    color: 'error.main' 
-                  }}
-                >
-                  <ExitToApp sx={{ mr: 1 }} /> {t('settings.logout.title')}
+                <Typography variant="h6" sx={{ display: 'flex', alignItems: 'center', fontWeight: 600, color: 'error.main' }}>
+                  <ExitToApp sx={{ mr: 1 }} /> Đăng xuất
                 </Typography>
                 <Divider sx={{ my: 2 }} />
-                <Typography sx={{ mb: 2 }}>
-                  {t('settings.logout.description')}
-                </Typography>
-                <Button
-                  variant="contained"
-                  color="error"
-                  startIcon={<ExitToApp />}
-                  onClick={() => setConfirmLogout(true)}
-                  sx={{ 
-                    '&:hover': { backgroundColor: 'error.dark' },
-                    px: 3,
-                    py: 1,
-                    borderRadius: 2
-                  }}
-                >
-                  {t('settings.logout.button')}
+                <Typography sx={{ mb: 2 }}>Đăng xuất khỏi tài khoản của bạn trên thiết bị này.</Typography>
+                <Button variant="contained" color="error" startIcon={<ExitToApp />} onClick={() => setConfirmLogout(true)} sx={{ '&:hover': { backgroundColor: 'error.dark' }, px: 3, py: 1, borderRadius: 2 }}>
+                  Đăng xuất
                 </Button>
               </CardContent>
             </Card>
@@ -451,60 +281,6 @@ const Settings = () => {
           <CircularProgress sx={{ color: 'white' }} />
         </Box>
       )}
-
-      {checkingAI && (
-        <Box
-          sx={{
-            position: 'fixed',
-            top: 0,
-            left: 0,
-            width: '100%',
-            height: '100%',
-            display: 'flex',
-            flexDirection: 'column',
-            justifyContent: 'center',
-            alignItems: 'center',
-            backgroundColor: 'rgba(0, 0, 0, 0.7)',
-            zIndex: 1200,
-          }}
-        >
-          <CircularProgress sx={{ color: '#A78BFA', mb: 2 }} />
-          <Typography sx={{ color: 'white', fontWeight: 500 }}>
-            {t('ai_dialog.creating_report')}
-          </Typography>
-        </Box>
-      )}
-
-      <Dialog
-        open={showAIResultPopup}
-        onClose={handleCloseAIResultPopup}
-        PaperProps={{ style: { borderRadius: 16 } }}
-      >
-        <DialogTitle sx={{ 
-          background: 'linear-gradient(135deg, #A78BFA, #8B5CF6)', 
-          color: 'white',
-          fontWeight: 600
-        }}>
-          {t('ai_dialog.result_title')}
-        </DialogTitle>
-        <DialogContent sx={{ pt: 3 }}>
-          <DialogContentText>
-            {t('ai_dialog.result_message')}
-          </DialogContentText>
-        </DialogContent>
-        <DialogActions sx={{ pb: 2, px: 3 }}>
-          <Button onClick={handleCloseAIResultPopup}>
-            {t('ai_dialog.close')}
-          </Button>
-          <Button 
-            onClick={handleViewAIReport}
-            variant="contained"
-            sx={{ bgcolor: '#A78BFA', '&:hover': { bgcolor: '#8B5CF6' } }}
-          >
-            {t('ai_dialog.view_report')}
-          </Button>
-        </DialogActions>
-      </Dialog>
 
       <Snackbar
         open={snackbar.open}

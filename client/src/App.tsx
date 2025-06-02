@@ -3,6 +3,7 @@ import { ThemeProvider as MuiThemeProvider } from '@mui/material/styles';
 import { lazy, Suspense } from 'react';
 import { BrowserRouter, Route, Routes } from 'react-router-dom';
 import { AuthProvider } from './contexts/AuthContext';
+import { LanguageProvider } from './contexts/LanguageContext';
 import { ThemeProvider, useThemeContext } from './contexts/ThemeContext';
 
 
@@ -23,6 +24,7 @@ const Register = lazy(() => import('./pages/oauth/Register'));
 const ResetPassword = lazy(() => import('./pages/oauth/ResetPassword'));
 const VerifyEmail = lazy(() => import('./pages/oauth/VerifyEmail'));
 const PricingPage = lazy(() => import('./components/PricingPage'));
+const PaymentSuccess = lazy(() => import('./pages/PaymentSuccess'));
 
 
 // User Dashboard Pages - Lazy Loaded
@@ -92,6 +94,7 @@ const AppContent = () => {
             <Route path="/oauth" element={<OAuthHandler />} />
             <Route path="/oauth/success" element={<OAuthSuccess />} />
             <Route path="/pricing" element={<PricingPage />} />
+            <Route path="/payment-success" element={<PaymentSuccess />} />
 
             {/* Standalone Transactions Route */}
             <Route path="/transactions" element={<UserTransactions />} />
@@ -162,12 +165,13 @@ const AppContent = () => {
 };
 
 const App = () => (
-<BrowserRouter>
-  <ThemeProvider>
-    <AppContent />
-  </ThemeProvider>
-</BrowserRouter>
-
+  <BrowserRouter>
+    <ThemeProvider>
+      <LanguageProvider>
+        <AppContent />
+      </LanguageProvider>
+    </ThemeProvider>
+  </BrowserRouter>
 );
 
 export default App;

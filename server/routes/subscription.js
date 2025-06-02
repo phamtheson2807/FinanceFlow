@@ -200,4 +200,112 @@ router.post('/create-payment-intent', authMiddleware, async (req, res) => {
   }
 });
 
+// Thêm route activate cho thanh toán một lần
+router.post('/activate', authMiddleware, async (req, res) => {
+  try {
+    const { plan } = req.body;
+    if (plan !== 'pro') {
+      return res.status(400).json({ message: 'Chỉ hỗ trợ nâng cấp lên gói pro.' });
+    }
+    const userId = new mongoose.Types.ObjectId(req.user.id);
+    // Cập nhật user
+    const user = await User.findById(userId);
+    if (!user) return res.status(404).json({ message: 'Không tìm thấy user' });
+    user.plan = 'pro';
+    await user.save();
+    // Cập nhật hoặc tạo subscription
+    let subscription = await Subscription.findOne({ userId });
+    if (subscription) {
+      subscription.plan = 'pro';
+      subscription.status = 'active';
+      subscription.startDate = new Date();
+      subscription.endDate = null;
+      await subscription.save();
+    } else {
+      subscription = new Subscription({
+        userId,
+        plan: 'pro',
+        status: 'active',
+        startDate: new Date(),
+      });
+      await subscription.save();
+    }
+    res.status(200).json({ message: 'Kích hoạt gói pro thành công', plan: 'pro' });
+  } catch (error) {
+    console.error('❌ Lỗi khi activate subscription:', error.message, error.stack);
+    res.status(500).json({ message: 'Lỗi máy chủ khi activate subscription: ' + error.message });
+  }
+});
+
+// Tạo Stripe Checkout Session cho thanh toán một lần
+router.post('/create-checkout-session', authMiddleware, async (req, res) => {
+  const { plan } = req.body;
+  if (plan !== 'pro') {
+    return res.status(400).json({ message: 'Chỉ hỗ trợ nâng cấp lên gói pro.' });
+  }
+  try {
+    const session = await stripe.checkout.sessions.create({
+      payment_method_types: ['card'],
+      mode: 'payment',
+      line_items: [
+        {
+          price_data: {
+            currency: 'usd',
+            product_data: { name: 'Gói Pro - Quản lý tài chính' },
+            unit_amount: 2000 * 100, // $20.00
+          },
+          quantity: 1,
+        },
+      ],
+      customer_email: req.user.email,
+      success_url: `${process.env.CLIENT_URL}/payment-success?session_id={CHECKOUT_SESSION_ID}`,
+      cancel_url: `${process.env.CLIENT_URL}/payment-cancel`,
+      metadata: { userId: req.user.id, plan: 'pro' },
+    });
+    res.json({ url: session.url });
+  } catch (error) {
+    console.error('❌ Lỗi tạo checkout session:', error);
+    res.status(500).json({ message: 'Lỗi máy chủ khi tạo checkout session' });
+  }
+});
+
+// Xác nhận thanh toán thành công từ Stripe Checkout
+router.post('/confirm-checkout', authMiddleware, async (req, res) => {
+  try {
+    const { sessionId } = req.body;
+    if (!sessionId) return res.status(400).json({ message: 'Thiếu sessionId' });
+    const session = await stripe.checkout.sessions.retrieve(sessionId);
+    if (session.payment_status !== 'paid') {
+      return res.status(400).json({ message: 'Thanh toán chưa hoàn tất!' });
+    }
+    const userId = new mongoose.Types.ObjectId(req.user.id);
+    // Cập nhật user
+    const user = await User.findById(userId);
+    if (!user) return res.status(404).json({ message: 'Không tìm thấy user' });
+    user.plan = 'pro';
+    await user.save();
+    // Cập nhật hoặc tạo subscription
+    let subscription = await Subscription.findOne({ userId });
+    if (subscription) {
+      subscription.plan = 'pro';
+      subscription.status = 'active';
+      subscription.startDate = new Date();
+      subscription.endDate = null;
+      await subscription.save();
+    } else {
+      subscription = new Subscription({
+        userId,
+        plan: 'pro',
+        status: 'active',
+        startDate: new Date(),
+      });
+      await subscription.save();
+    }
+    res.status(200).json({ message: 'Đã xác nhận thanh toán và nâng cấp gói pro!' });
+  } catch (error) {
+    console.error('❌ Lỗi khi xác nhận checkout:', error.message, error.stack);
+    res.status(500).json({ message: 'Lỗi máy chủ khi xác nhận checkout: ' + error.message });
+  }
+});
+
 module.exports = router;
